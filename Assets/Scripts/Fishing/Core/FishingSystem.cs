@@ -1,18 +1,21 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class FishingSystem : MonoBehaviour
+namespace Game.Fishing.Core
 {
-    // Start is called before the first frame update
-    void Start()
+    public class FishingSystem : MonoBehaviour
     {
-        
-    }
+        [SerializeField] private MonoBehaviour controller;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+        public MonoBehaviour Controller => controller;
+
+        private void Update()
+        {
+            // 先留空，避免和旧版 FishingController 冲突
+        }
+
+        public void CancelFishing()
+        {
+            // 先留空，后面再接
+        }
     }
 }

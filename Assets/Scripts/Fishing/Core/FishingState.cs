@@ -1,18 +1,13 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-public class FishingState : MonoBehaviour
+namespace Game.Fishing.Core
 {
-    // Start is called before the first frame update
-    void Start()
+    public enum FishingState
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        None,
+        Ready,
+        WaitingForBite,
+        PlayingMiniGame,
+        Success,
+        Failed,
+        Cooldown
     }
 }

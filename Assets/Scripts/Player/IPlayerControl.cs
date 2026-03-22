@@ -1,7 +1,9 @@
-public interface IPlayerControl
+namespace Game.Player
 {
-    void SetMovementEnabled(bool enabled);
-    void SetCameraEnabled(bool enabled);
-    void SetInputEnabled(bool enabled);
-    bool IsGrounded();
+    public interface IPlayerControl
+    {
+        void SetMoveEnabled(bool enabled);
+        void SetLookEnabled(bool enabled);
+        void PlayFishingAnimation(bool isFishing);
+    }
 }

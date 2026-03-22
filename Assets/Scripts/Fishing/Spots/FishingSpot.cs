@@ -1,26 +1,14 @@
 using UnityEngine;
+using Game.Fishing.Data;
 
-public class FishingSpot : MonoBehaviour
+namespace Game.Fishing.Spots
 {
-    [Header("µˆ”„µ„…Ë÷√")]
-    public Transform castPoint;
-
-    private void Reset()
+    public class FishingSpot : MonoBehaviour
     {
-        BoxCollider col = GetComponent<BoxCollider>();
-        if (col == null) col = gameObject.AddComponent<BoxCollider>();
+        [SerializeField] private FishingLootTable lootTable;
+        [SerializeField] private float interactDistance = 3f;
 
-        col.isTrigger = true;
-        col.size = new Vector3(2f, 2f, 2f);
-    }
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.cyan;
-
-        if (castPoint != null)
-        {
-            Gizmos.DrawSphere(castPoint.position, 0.2f);
-        }
+        public FishingLootTable LootTable => lootTable;
+        public float InteractDistance => interactDistance;
     }
 }

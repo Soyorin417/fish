@@ -1,0 +1,24 @@
+{
+  "items": [
+    {
+      "itemId": "fish_001",
+      "amount": 2
+    },
+    {
+      "itemId": "fish_002",
+      "amount": 3
+    },
+    {
+      "itemId": "fish_003",
+      "amount": 1
+    },
+    {
+      "itemId": "fish_004",
+      "amount": 1
+    },
+    {
+      "itemId": "fish_005",
+      "amount": 1
+    }
+  ]
+}

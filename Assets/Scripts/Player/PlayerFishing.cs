@@ -1,10 +1,17 @@
 using System.Collections;
 using UnityEngine;
 
+using Game.Fishing.Data;
+using Game.Fishing.Spots;
+using Game.Player;
+
 public class PlayerFishing : MonoBehaviour
 {
     public KeyCode fishKey = KeyCode.E;
     public KeyCode controlKey = KeyCode.Space;
+
+    [Header("Fish Table")]
+    public FishData[] fishTable;
 
     [Header("UI")]
     public FishingUI fishingUI;
@@ -88,7 +95,6 @@ public class PlayerFishing : MonoBehaviour
 
     private void Update()
     {
-        Debug.Log("Update中 -> inMiniGame = " + inMiniGame + ", isFishing = " + isFishing);
 
         if (inMiniGame)
         {
@@ -113,9 +119,9 @@ public class PlayerFishing : MonoBehaviour
 
         if (playerControl != null)
         {
-            playerControl.SetMovementEnabled(false);
-            playerControl.SetCameraEnabled(false);
-            playerControl.SetInputEnabled(false);
+            playerControl.SetMoveEnabled(false);
+            playerControl.SetLookEnabled(false);
+            playerControl.PlayFishingAnimation(true);
         }
 
         if (fishingUI != null)
@@ -125,6 +131,28 @@ public class PlayerFishing : MonoBehaviour
         }
 
         fishingRoutine = StartCoroutine(FishingFlow());
+    }
+
+    FishData GetRandomFish()
+    {
+        float total = 0f;
+
+        foreach (var f in fishTable)
+            total += f.weight;
+
+        float rand = Random.Range(0, total);
+
+        float cur = 0f;
+
+        foreach (var f in fishTable)
+        {
+            cur += f.weight;
+
+            if (rand <= cur)
+                return f;
+        }
+
+        return fishTable[0];
     }
 
     private IEnumerator FishingFlow()
@@ -267,9 +295,15 @@ public class PlayerFishing : MonoBehaviour
         inMiniGame = false;
         StopCurrentRoutine();
 
+        FishData fish = GetRandomFish();
+
+        float size = Random.Range(fish.sizeMin, fish.sizeMax);
+
+        Debug.Log("钓到了: " + fish.fishName + " 体型:" + size.ToString("F2"));
+
         if (fishingUI != null)
         {
-            fishingUI.ShowHint("钓到了！");
+            fishingUI.ShowHint("钓到了 " + fish.fishName);
             fishingUI.HideMiniGame();
         }
 
@@ -304,9 +338,9 @@ public class PlayerFishing : MonoBehaviour
 
         if (playerControl != null)
         {
-            playerControl.SetInputEnabled(true);
-            playerControl.SetMovementEnabled(true);
-            playerControl.SetCameraEnabled(true);
+            playerControl.SetMoveEnabled(true);
+            playerControl.SetLookEnabled(true);
+            playerControl.PlayFishingAnimation(false);
         }
 
         if (fishingUI != null)
@@ -390,4 +424,6 @@ public class PlayerFishing : MonoBehaviour
             }
         }
     }
+
+    
 }

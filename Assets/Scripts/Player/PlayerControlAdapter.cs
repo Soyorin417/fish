@@ -1,24 +1,26 @@
 using UnityEngine;
 using StarterAssets;
+using Game.Player;
 
 public class PlayerControlAdapter : MonoBehaviour, IPlayerControl
 {
     private ThirdPersonController thirdPersonController;
     private StarterAssetsInputs starterInputs;
+    private Animator animator;
 
-    private bool movementEnabled = true;
-    private bool cameraEnabled = true;
-    private bool inputEnabled = true;
+    private bool moveEnabled = true;
+    private bool lookEnabled = true;
 
     private void Awake()
     {
         thirdPersonController = GetComponent<ThirdPersonController>();
         starterInputs = GetComponent<StarterAssetsInputs>();
+        animator = GetComponent<Animator>();
     }
 
-    public void SetMovementEnabled(bool enabled)
+    public void SetMoveEnabled(bool enabled)
     {
-        movementEnabled = enabled;
+        moveEnabled = enabled;
 
         if (!enabled && starterInputs != null)
         {
@@ -28,9 +30,9 @@ public class PlayerControlAdapter : MonoBehaviour, IPlayerControl
         }
     }
 
-    public void SetCameraEnabled(bool enabled)
+    public void SetLookEnabled(bool enabled)
     {
-        cameraEnabled = enabled;
+        lookEnabled = enabled;
 
         if (thirdPersonController != null)
         {
@@ -43,45 +45,26 @@ public class PlayerControlAdapter : MonoBehaviour, IPlayerControl
         }
     }
 
-    public void SetInputEnabled(bool enabled)
+    public void PlayFishingAnimation(bool isFishing)
     {
-        inputEnabled = enabled;
-
-        if (!enabled && starterInputs != null)
+        if (animator != null)
         {
-            starterInputs.move = Vector2.zero;
-            starterInputs.look = Vector2.zero;
-            starterInputs.sprint = false;
-            starterInputs.jump = false;
+            animator.SetBool("Fishing", isFishing);
         }
-    }
-
-    public bool IsGrounded()
-    {
-        return thirdPersonController != null && thirdPersonController.Grounded;
     }
 
     private void Update()
     {
         if (starterInputs == null) return;
 
-        if (!inputEnabled)
-        {
-            starterInputs.move = Vector2.zero;
-            starterInputs.look = Vector2.zero;
-            starterInputs.sprint = false;
-            starterInputs.jump = false;
-            return;
-        }
-
-        if (!movementEnabled)
+        if (!moveEnabled)
         {
             starterInputs.move = Vector2.zero;
             starterInputs.sprint = false;
             starterInputs.jump = false;
         }
 
-        if (!cameraEnabled)
+        if (!lookEnabled)
         {
             starterInputs.look = Vector2.zero;
         }
