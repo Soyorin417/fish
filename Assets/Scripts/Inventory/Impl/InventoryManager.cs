@@ -1,25 +1,22 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Game.Fishing.Data;
 using Game.Inventory.Interface;
 
 namespace Game.Inventory.Impl
 {
-    public class InventoryManager : MonoBehaviour, IInventoryService, IFishingResultHandler
+    public class InventoryManager : MonoBehaviour, IInventoryService
     {
         public static InventoryManager Instance { get; private set; }
 
-        [Header("背包数据")]
+        [Header("Inventory Data")]
         [SerializeField] private List<InventoryItem> items = new List<InventoryItem>();
 
-
-
-        [Header("最大格子数")]
+        [Header("Max Slots")]
         [SerializeField] private int maxSlots = 20;
 
         public IReadOnlyList<InventoryItem> Items => items;
-        public System.Action onInventoryChanged;
+        public Action onInventoryChanged;
         public int MaxSlots => maxSlots;
 
         public event Action OnInventoryChanged;
@@ -43,15 +40,18 @@ namespace Game.Inventory.Impl
             NotifyChanged();
         }
 
-
         public bool AddItem(ItemData itemData, int amount = 1)
         {
-            Debug.Log("AddItem 被调用: " + itemData.itemName);
-            if (itemData == null || amount <= 0) return false;
+            if (itemData == null || amount <= 0)
+            {
+                return false;
+            }
+
+            Debug.Log("AddItem called: " + itemData.itemName);
 
             if (itemData.stackable)
             {
-                var exist = items.Find(i => i.itemData == itemData);
+                InventoryItem exist = items.Find(i => i.itemData == itemData);
                 if (exist != null)
                 {
                     exist.amount += amount;
@@ -61,7 +61,9 @@ namespace Game.Inventory.Impl
             }
 
             if (items.Count >= maxSlots)
+            {
                 return false;
+            }
 
             items.Add(new InventoryItem(itemData, amount));
             NotifyChanged();
@@ -70,14 +72,22 @@ namespace Game.Inventory.Impl
 
         public bool RemoveItem(ItemData itemData, int amount = 1)
         {
-            if (itemData == null || amount <= 0) return false;
+            if (itemData == null || amount <= 0)
+            {
+                return false;
+            }
 
-            var exist = items.Find(i => i.itemData == itemData);
-            if (exist == null) return false;
+            InventoryItem exist = items.Find(i => i.itemData == itemData);
+            if (exist == null)
+            {
+                return false;
+            }
 
             exist.amount -= amount;
             if (exist.amount <= 0)
+            {
                 items.Remove(exist);
+            }
 
             NotifyChanged();
             return true;
@@ -85,43 +95,32 @@ namespace Game.Inventory.Impl
 
         public int GetItemCount(ItemData itemData)
         {
-            var exist = items.Find(i => i.itemData == itemData);
+            InventoryItem exist = items.Find(i => i.itemData == itemData);
             return exist == null ? 0 : exist.amount;
         }
 
         public bool HasSpace(ItemData itemData, int amount = 1)
         {
-            if (itemData == null || amount <= 0) return false;
+            if (itemData == null || amount <= 0)
+            {
+                return false;
+            }
 
             if (itemData.stackable)
             {
-                var exist = items.Find(i => i.itemData == itemData);
-                if (exist != null) return true;
+                InventoryItem exist = items.Find(i => i.itemData == itemData);
+                if (exist != null)
+                {
+                    return true;
+                }
             }
 
             return items.Count < maxSlots;
         }
 
-        public void HandleFishResult(FishData fishData, int amount = 1)
-        {
-            Debug.Log("HandleFishResult 被调用");
-            if (fishData == null || fishData.inventoryItem == null)
-            {
-                Debug.LogWarning("FishData 或 inventoryItem 未配置，无法加入背包");
-                return;
-            }
-
-            bool success = AddItem(fishData.inventoryItem, amount);
-            Debug.Log(success
-                ? $"获得物品：{fishData.inventoryItem.itemName} x{amount}"
-                : $"背包已满，无法获得：{fishData.inventoryItem.itemName}");
-        }
-
-
-
         private void NotifyChanged()
         {
-            Debug.Log("NotifyChanged 被调用");
+            Debug.Log("NotifyChanged called");
             onInventoryChanged?.Invoke();
             OnInventoryChanged?.Invoke();
 

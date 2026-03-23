@@ -2715,6 +2715,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ce1b1c89cc01b594b97ffd660fb7409e, type: 3}
+--- !u!114 &383336291 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8276131593622698067, guid: 93744b7ce30e10043a89015255622e97,
+    type: 3}
+  m_PrefabInstance: {fileID: 1620246034}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &385252859
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3814,7 +3826,7 @@ GameObject:
   - component: {fileID: 503652217}
   - component: {fileID: 503652218}
   m_Layer: 0
-  m_Name: UiManager
+  m_Name: UIManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10068,12 +10080,13 @@ MonoBehaviour:
   slotPrefab: {fileID: 4429060151175468398, guid: a9697db982184ef43b53d95aa98ddc80,
     type: 3}
   itemIcon: {fileID: 1437706833}
-  itemNameText: {fileID: 0}
+  itemNameText: {fileID: 383336291}
   itemDescText: {fileID: 0}
   itemAmountText: {fileID: 0}
   closeButton: {fileID: 1975810013}
   useButton: {fileID: 534387198}
   dropButton: {fileID: 2104423523}
+  selectButton: {fileID: 0}
 --- !u!1001 &1174333537
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -18072,13 +18085,13 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: 
-        m_MethodName: 
+      - m_Target: {fileID: 503652218}
+        m_TargetAssemblyTypeName: InventoryToggle, Assembly-CSharp
+        m_MethodName: CloseInventory
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: 
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -32466,7 +32479,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 6f50aab460ed13843a90a77e8f53d633, type: 2}
   - {fileID: 11400000, guid: dd24f3cd933086442bfba0d8aa44fdc5, type: 2}
   - {fileID: 11400000, guid: 1f0c0a0fc0db5274ca9ae0b45f53d814, type: 2}
+  defaultLootTable: {fileID: 0}
   fishingUI: {fileID: 639490019}
+  inventoryServiceSource: {fileID: 0}
   waitMinTime: 1.5
   waitMaxTime: 3.5
   miniGameDuration: 12

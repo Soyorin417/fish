@@ -1,14 +1,14 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
+using Game.Inventory.Impl;
 
 public class InventorySlotUI : MonoBehaviour
 {
-    public Image icon;
-    public TMP_Text nameText;
-    public TMP_Text amountText;
-    public Button button;
-    public GameObject highlight;
+    [Header("UI")]
+    public Image icon;              // 绑定 ItemIcon
+    public TMP_Text amountText;     // 绑定 Amount
+    public GameObject highlight;    // 绑定 Highlight
 
     private InventoryItem currentItem;
     private InventoryUI inventoryUI;
@@ -20,16 +20,23 @@ public class InventorySlotUI : MonoBehaviour
 
         if (item == null || item.itemData == null)
         {
-            Debug.LogWarning("item 或 itemData 为空，执行 Clear()");
-            Clear();
+            Debug.Log("SetData: item 为空");
+
+            if (icon != null)
+            {
+                icon.sprite = null;
+                icon.enabled = false;
+            }
+
+            if (amountText != null)
+                amountText.text = "";
+
+            SetSelected(false);
             return;
         }
 
-        if (nameText != null)
-            nameText.text = item.itemData.itemName;
-
-        if (amountText != null)
-            amountText.text = item.amount > 1 ? "x" + item.amount : "";
+        Debug.Log("SetData物品: " + item.itemData.itemName);
+        Debug.Log("SetData图标是否为空: " + (item.itemData.icon == null));
 
         if (icon != null)
         {
@@ -37,21 +44,20 @@ public class InventorySlotUI : MonoBehaviour
             icon.enabled = item.itemData.icon != null;
         }
 
-        if (highlight != null)
-            highlight.SetActive(false);
+        if (amountText != null)
+            amountText.text = item.amount > 1 ? "x" + item.amount : "";
 
-        if (button != null)
-        {
-            button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(OnClickSlot);
-        }
-
-        Debug.Log("SetData 成功: " + item.itemData.itemName);
+        SetSelected(false);
     }
 
-    private void OnClickSlot()
+    public void OnClick()
     {
-        if (currentItem != null && inventoryUI != null)
+        Debug.Log("click success");
+
+        if (currentItem == null || currentItem.itemData == null)
+            return;
+
+        if (inventoryUI != null)
         {
             inventoryUI.SelectItem(this, currentItem);
         }
@@ -60,28 +66,8 @@ public class InventorySlotUI : MonoBehaviour
     public void SetSelected(bool selected)
     {
         if (highlight != null)
+        {
             highlight.SetActive(selected);
-    }
-
-    public void Clear()
-    {
-        currentItem = null;
-
-        if (nameText != null) nameText.text = "";
-        if (amountText != null) amountText.text = "";
-
-        if (icon != null)
-        {
-            icon.sprite = null;
-            icon.enabled = false;
-        }
-
-        if (highlight != null)
-            highlight.SetActive(false);
-
-        if (button != null)
-        {
-            button.onClick.RemoveAllListeners();
         }
     }
 }

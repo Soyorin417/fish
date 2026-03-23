@@ -1,20 +1,28 @@
+using Game.Fishing.Core;
 using Game.Fishing.Data;
 using Game.Fishing.Spots;
 using Game.Inventory.Impl;
+using Game.Inventory.Interface;
 using Game.Player;
 using System.Collections;
 using UnityEngine;
 
-public class PlayerFishing : MonoBehaviour
+public class PlayerFishing : MonoBehaviour, IFishingController
 {
     public KeyCode fishKey = KeyCode.E;
     public KeyCode controlKey = KeyCode.Space;
 
-    [Header("Fish Table")]
+    [Header("Legacy Fish Table")]
     public FishData[] fishTable;
+
+    [Header("Loot")]
+    public FishingLootTable defaultLootTable;
 
     [Header("UI")]
     public FishingUI fishingUI;
+
+    [Header("Services")]
+    [SerializeField] private MonoBehaviour inventoryServiceSource;
 
     [Header("Wait Settings")]
     public float waitMinTime = 1.5f;
@@ -23,137 +31,125 @@ public class PlayerFishing : MonoBehaviour
     [Header("Mini Game")]
     public float miniGameDuration = 999f;
 
-    [Tooltip("目标判定区移动速度")]
+    [Tooltip("Target zone movement speed")]
     public float fishZoneSpeed = 0.02f;
 
-    [Tooltip("玩家条按住空格向右移动速度")]
+    [Tooltip("Player bar move speed while holding Space")]
     public float playerMoveRightSpeed = 0.1f;
 
-    [Tooltip("玩家条不按时向左回落速度")]
+    [Tooltip("Player bar fall speed when Space is released")]
     public float playerFallLeftSpeed = 0.05f;
 
-    [Tooltip("判定区宽度（0~1）")]
+    [Tooltip("Target zone width (0 to 1)")]
     [Range(0.05f, 0.5f)]
     public float fishZoneWidth = 0.4f;
 
-    [Tooltip("玩家条宽度（0~1）")]
+    [Tooltip("Player bar width (0 to 1)")]
     [Range(0.01f, 0.2f)]
     public float playerBarWidth = 0.20f;
 
-    [Tooltip("在判定区内时，进度增长速度")]
+    [Tooltip("Progress gain speed while inside the target zone")]
     public float progressGainPerSecond = 1f;
 
-    [Tooltip("离开判定区时，进度下降速度")]
+    [Tooltip("Progress loss speed while outside the target zone")]
     public float progressLosePerSecond = 0.08f;
 
-    [Tooltip("小游戏开始时的初始进度")]
+    [Tooltip("Initial catch progress when the mini game starts")]
     [Range(0f, 1f)]
     public float startProgress = 0.80f;
 
-    [Tooltip("小游戏开始后的保护时间，期间不会掉进度")]
+    [Tooltip("Grace time before progress can start dropping")]
     public float startGraceTime = 3f;
 
-    private float currentGraceTimer = 0f;
-
+    private float currentGraceTimer;
     private FishingSpot currentSpot;
     private IPlayerControl playerControl;
+    private IInventoryService inventoryService;
     private Coroutine fishingRoutine;
-
-    private bool isFishing;
-    private bool inMiniGame;
+    private Coroutine finishRoutine;
+    private FishingState state = FishingState.None;
 
     private float fishZoneCenter = 0.2f;
     private int fishZoneDir = 1;
+    private float playerBarCenter;
+    private float catchProgress;
 
-    private float playerBarCenter = 0f;
+    public FishingState State => state;
 
-    private float catchProgress = 0f;
+    public bool IsFishing =>
+        state == FishingState.WaitingForBite ||
+        state == FishingState.PlayingMiniGame ||
+        state == FishingState.Success ||
+        state == FishingState.Failed;
 
     private void Awake()
     {
         playerControl = GetComponent<IPlayerControl>();
+        inventoryService = inventoryServiceSource as IInventoryService;
+
+        if (inventoryService == null && inventoryServiceSource != null)
+        {
+            Debug.LogError("inventoryServiceSource does not implement IInventoryService.");
+        }
     }
 
     private void Start()
     {
-        if (fishingUI == null)
-        {
-            fishingUI = FindObjectOfType<FishingUI>(true);
-        }
+        ResolveFishingUI();
+        ResolveInventoryService();
 
-        Debug.Log("Start -> fishingUI = " + fishingUI);
-
-        if (fishingUI != null)
-        {
-            fishingUI.HideAll();
-        }
-        else
-        {
-            Debug.LogError("没有找到 FishingUI。请确认场景里 FishingCanvas 上挂了 FishingUI 脚本。");
-        }
+        fishingUI?.HideAll();
+        state = currentSpot != null ? FishingState.Ready : FishingState.None;
     }
 
     private void Update()
     {
-
-        if (inMiniGame)
+        if (state == FishingState.PlayingMiniGame)
         {
-            Debug.Log("准备执行 UpdateMiniGame");
             UpdateMiniGame();
             return;
         }
 
-        if (currentSpot == null) return;
-
-        if (!isFishing && Input.GetKeyDown(fishKey))
+        if (currentSpot == null)
         {
-            Debug.Log("按下E，开始钓鱼");
+            return;
+        }
+
+        if (state == FishingState.Ready && Input.GetKeyDown(fishKey))
+        {
             StartFishing();
         }
     }
 
-    private void StartFishing()
+    public void CancelFishing()
     {
-        isFishing = true;
-        inMiniGame = false;
+        StopRoutine(ref fishingRoutine);
+        StopRoutine(ref finishRoutine);
+        ApplyPlayerFishingLock(false);
 
-        if (playerControl != null)
+        if (currentSpot != null)
         {
-            playerControl.SetMoveEnabled(false);
-            playerControl.SetLookEnabled(false);
-            playerControl.SetJumpEnabled(false);
-            playerControl.PlayFishingAnimation(true);
+            state = FishingState.Ready;
+            ShowReadyHint();
+            return;
         }
 
-        if (fishingUI != null)
-        {
-            fishingUI.ShowHint("等待鱼儿上钩...");
-            fishingUI.HideMiniGame();
-        }
-
-        fishingRoutine = StartCoroutine(FishingFlow());
+        state = FishingState.None;
+        fishingUI?.HideAll();
     }
 
-    FishData GetRandomFish()
+    private void StartFishing()
     {
-        float total = 0f;
-
-        foreach (var f in fishTable)
-            total += f.weight;
-
-        float rand = Random.Range(0, total);
-
-        float cur = 0f;
-
-        foreach (var f in fishTable)
+        if (currentSpot == null || state != FishingState.Ready)
         {
-            cur += f.weight;
-
-            if (rand <= cur)
-                return f;
+            return;
         }
 
-        return fishTable[0];
+        StopRoutine(ref finishRoutine);
+        ApplyPlayerFishingLock(true);
+        state = FishingState.WaitingForBite;
+        ShowWaitingForBite();
+        fishingRoutine = StartCoroutine(FishingFlow());
     }
 
     private IEnumerator FishingFlow()
@@ -161,24 +157,26 @@ public class PlayerFishing : MonoBehaviour
         float waitTime = Random.Range(waitMinTime, waitMaxTime);
         yield return new WaitForSeconds(waitTime);
 
+        if (state != FishingState.WaitingForBite || currentSpot == null)
+        {
+            yield break;
+        }
+
         StartMiniGame();
 
         float timer = miniGameDuration;
-
-        while (timer > 0f)
+        while (state == FishingState.PlayingMiniGame && timer > 0f)
         {
             timer -= Time.deltaTime;
 
             if (catchProgress >= 1f)
             {
-                Debug.Log("触发 CatchFish");
                 CatchFish();
                 yield break;
             }
 
             if (catchProgress <= 0f)
             {
-                Debug.Log("触发 FailFishing");
                 FailFishing();
                 yield break;
             }
@@ -186,14 +184,15 @@ public class PlayerFishing : MonoBehaviour
             yield return null;
         }
 
-        FailFishing();
+        if (state == FishingState.PlayingMiniGame)
+        {
+            FailFishing();
+        }
     }
+
     private void StartMiniGame()
     {
-        Debug.Log("=== StartMiniGame ===");
-
-        inMiniGame = true;
-
+        state = FishingState.PlayingMiniGame;
         fishZoneCenter = 0.2f;
         fishZoneDir = 1;
         playerBarCenter = fishZoneCenter;
@@ -202,20 +201,16 @@ public class PlayerFishing : MonoBehaviour
 
         if (fishingUI != null)
         {
-            fishingUI.ShowHint("按住空格控制鱼线，保持在判定区内");
+            fishingUI.ShowHint("Hold Space to keep the line inside the target zone");
             fishingUI.ShowMiniGame();
-            fishingUI.SetFishZonePosition(fishZoneCenter);
-            fishingUI.SetPlayerBarPosition(playerBarCenter);
-            fishingUI.SetProgress(catchProgress);
+            SyncMiniGameUi();
         }
     }
 
     private void UpdateMiniGame()
     {
-        Debug.Log("UpdateMiniGame 正在运行");
         float dt = Time.deltaTime;
 
-        // 1. 鱼判定区左右移动
         fishZoneCenter += fishZoneDir * fishZoneSpeed * dt;
 
         float halfZone = fishZoneWidth * 0.5f;
@@ -230,7 +225,6 @@ public class PlayerFishing : MonoBehaviour
             fishZoneDir = 1;
         }
 
-        // 2. 玩家条：按住空格往右，不按往左掉
         if (Input.GetKey(controlKey))
         {
             playerBarCenter += playerMoveRightSpeed * dt;
@@ -243,203 +237,340 @@ public class PlayerFishing : MonoBehaviour
         float halfPlayer = playerBarWidth * 0.5f;
         playerBarCenter = Mathf.Clamp(playerBarCenter, halfPlayer, 1f - halfPlayer);
 
-        // 3. 判断是否重叠
         float zoneLeft = fishZoneCenter - halfZone;
         float zoneRight = fishZoneCenter + halfZone;
-
         float playerLeft = playerBarCenter - halfPlayer;
         float playerRight = playerBarCenter + halfPlayer;
-
         bool inZone = playerRight >= zoneLeft && playerLeft <= zoneRight;
 
-        // 4. 单进度条逻辑
         if (currentGraceTimer > 0f)
         {
             currentGraceTimer -= dt;
-
-            // 保护期内：在区间里可以涨，不在区间里不扣
             if (inZone)
             {
                 catchProgress += progressGainPerSecond * dt;
             }
+        }
+        else if (inZone)
+        {
+            catchProgress += progressGainPerSecond * dt;
         }
         else
         {
-            if (inZone)
-            {
-                catchProgress += progressGainPerSecond * dt;
-            }
-            else
-            {
-                catchProgress -= progressLosePerSecond * dt;
-            }
+            catchProgress -= progressLosePerSecond * dt;
         }
 
         catchProgress = Mathf.Clamp01(catchProgress);
-
-        catchProgress = Mathf.Clamp01(catchProgress);
-
-        // 5. UI刷新
-        if (fishingUI != null)
-        {
-            fishingUI.SetFishZonePosition(fishZoneCenter);
-            fishingUI.SetPlayerBarPosition(playerBarCenter);
-            fishingUI.SetProgress(catchProgress);
-        }
+        SyncMiniGameUi();
     }
 
     private void CatchFish()
     {
-        inMiniGame = false;
-        StopCurrentRoutine();
+        state = FishingState.Success;
+        StopRoutine(ref fishingRoutine);
 
-        FishData fish = GetRandomFish();
-        float size = Random.Range(fish.sizeMin, fish.sizeMax);
-
-        Debug.Log("钓到了: " + fish.fishName + " 体型:" + size.ToString("F2"));
-
-        // 关键：写入背包
-        if (fish != null && fish.inventoryItem != null)
-        {
-            if (InventoryManager.Instance != null)
-            {
-                bool success = InventoryManager.Instance.AddItem(fish.inventoryItem, 1);
-                Debug.Log("写入背包结果: " + success);
-            }
-            else
-            {
-                Debug.LogError("InventoryManager.Instance 为空，无法把鱼加入背包");
-            }
-        }
-        else
-        {
-            Debug.LogError("FishData 或 fish.inventoryItem 为空，无法加入背包");
-        }
+        FishData fish = RollFish();
+        string resultMessage = BuildCatchMessage(fish);
 
         if (fishingUI != null)
         {
-            fishingUI.ShowHint("钓到了 " + fish.fishName);
+            fishingUI.ShowHint(resultMessage);
             fishingUI.HideMiniGame();
         }
 
-        StartCoroutine(FinishAfterDelay());
+        finishRoutine = StartCoroutine(FinishAfterDelay());
     }
 
     private void FailFishing()
     {
-        inMiniGame = false;
-        StopCurrentRoutine();
+        state = FishingState.Failed;
+        StopRoutine(ref fishingRoutine);
 
         if (fishingUI != null)
         {
-            fishingUI.ShowHint("鱼跑了...");
+            fishingUI.ShowHint("The fish got away...");
             fishingUI.HideMiniGame();
         }
 
-        StartCoroutine(FinishAfterDelay());
+        finishRoutine = StartCoroutine(FinishAfterDelay());
     }
 
     private IEnumerator FinishAfterDelay()
     {
         yield return new WaitForSeconds(0.8f);
-        StopFishing();
+        finishRoutine = null;
+        FinishFishingSession();
     }
 
-    private void StopFishing()
+    private void FinishFishingSession()
     {
-        isFishing = false;
-        inMiniGame = false;
-        StopCurrentRoutine();
+        ApplyPlayerFishingLock(false);
 
-        if (playerControl != null)
+        if (currentSpot != null)
         {
-            if (playerControl != null)
+            state = FishingState.Ready;
+            ShowReadyHint();
+            return;
+        }
+
+        state = FishingState.None;
+        fishingUI?.HideAll();
+    }
+
+    private FishingLootTable GetActiveLootTable()
+    {
+        if (currentSpot != null && currentSpot.LootTable != null)
+        {
+            return currentSpot.LootTable;
+        }
+
+        return defaultLootTable;
+    }
+
+    private FishData RollFish()
+    {
+        FishingLootTable lootTable = GetActiveLootTable();
+        if (lootTable != null)
+        {
+            return lootTable.Roll();
+        }
+
+        return RollFishFromLegacyTable();
+    }
+
+    private FishData RollFishFromLegacyTable()
+    {
+        if (fishTable == null || fishTable.Length == 0)
+        {
+            return null;
+        }
+
+        float total = 0f;
+        FishData fallbackFish = null;
+
+        foreach (FishData fish in fishTable)
+        {
+            if (fish == null)
             {
-                playerControl.SetMoveEnabled(true);
-                playerControl.SetLookEnabled(true);
-                playerControl.SetJumpEnabled(true);
-                playerControl.PlayFishingAnimation(false);
+                continue;
+            }
+
+            total += fish.weight;
+            if (fallbackFish == null)
+            {
+                fallbackFish = fish;
             }
         }
 
+        if (fallbackFish == null)
+        {
+            return null;
+        }
+
+        if (total <= 0f)
+        {
+            return fallbackFish;
+        }
+
+        float rand = Random.Range(0f, total);
+        float cur = 0f;
+
+        foreach (FishData fish in fishTable)
+        {
+            if (fish == null)
+            {
+                continue;
+            }
+
+            cur += fish.weight;
+            if (rand <= cur)
+            {
+                return fish;
+            }
+        }
+
+        return fallbackFish;
+    }
+
+    private string BuildCatchMessage(FishData fish)
+    {
+        if (fish == null)
+        {
+            return "Caught something, but no FishData is configured.";
+        }
+
+        TryAddFishToInventory(fish, 1, out string message);
+        return message;
+    }
+
+    private bool TryAddFishToInventory(FishData fish, int amount, out string message)
+    {
+        if (fish == null)
+        {
+            message = "Caught something, but no FishData is configured.";
+            return false;
+        }
+
+        if (fish.inventoryItem == null)
+        {
+            message = "Caught " + fish.fishName + ", but no inventory item is configured.";
+            return false;
+        }
+
+        ResolveInventoryService();
+        if (inventoryService == null)
+        {
+            message = "Caught " + fish.fishName + ", but no inventory service is available.";
+            return false;
+        }
+
+        bool success = inventoryService.AddItem(fish.inventoryItem, amount);
+        message = success
+            ? "Caught " + fish.fishName
+            : "Caught " + fish.fishName + ", but the inventory is full.";
+        return success;
+    }
+
+    private void ResolveFishingUI()
+    {
         if (fishingUI != null)
         {
-            if (currentSpot != null)
-            {
-                fishingUI.ShowHint("按 E 开始钓鱼");
-                fishingUI.HideMiniGame();
-            }
-            else
-            {
-                fishingUI.HideAll();
-            }
+            return;
+        }
+
+        FishingUIBinder binder = FindObjectOfType<FishingUIBinder>(true);
+        if (binder != null)
+        {
+            fishingUI = binder.fishingUI;
+        }
+
+        if (fishingUI == null)
+        {
+            fishingUI = FindObjectOfType<FishingUI>(true);
+        }
+
+        if (fishingUI == null)
+        {
+            Debug.LogError("FishingUI was not found. Check that a FishingUI component exists in the scene.");
         }
     }
 
-    private void StopCurrentRoutine()
+    private void ResolveInventoryService()
     {
-        if (fishingRoutine != null)
+        if (inventoryService != null)
         {
-            StopCoroutine(fishingRoutine);
-            fishingRoutine = null;
+            return;
+        }
+
+        inventoryService = inventoryServiceSource as IInventoryService;
+        if (inventoryService == null && InventoryManager.Instance != null)
+        {
+            inventoryService = InventoryManager.Instance;
+        }
+    }
+
+    private void ApplyPlayerFishingLock(bool locked)
+    {
+        if (playerControl == null)
+        {
+            return;
+        }
+
+        playerControl.SetMoveEnabled(!locked);
+        playerControl.SetLookEnabled(!locked);
+        playerControl.SetJumpEnabled(!locked);
+        playerControl.PlayFishingAnimation(locked);
+    }
+
+    private void ShowWaitingForBite()
+    {
+        if (fishingUI == null)
+        {
+            return;
+        }
+
+        fishingUI.ShowHint("Waiting for a bite...");
+        fishingUI.HideMiniGame();
+    }
+
+    private void ShowReadyHint()
+    {
+        if (fishingUI == null)
+        {
+            return;
+        }
+
+        fishingUI.ShowHint("Press E to start fishing");
+        fishingUI.HideMiniGame();
+    }
+
+    private void SyncMiniGameUi()
+    {
+        if (fishingUI == null)
+        {
+            return;
+        }
+
+        fishingUI.SetFishZonePosition(fishZoneCenter);
+        fishingUI.SetPlayerBarPosition(playerBarCenter);
+        fishingUI.SetProgress(catchProgress);
+    }
+
+    private void StopRoutine(ref Coroutine routine)
+    {
+        if (routine != null)
+        {
+            StopCoroutine(routine);
+            routine = null;
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-
-        FishingSpot spot = other.GetComponent<FishingSpot>();
+        FishingSpot spot = GetSpotFromCollider(other);
         if (spot == null)
         {
-            spot = other.GetComponentInParent<FishingSpot>();
+            return;
         }
 
-        if (spot != null)
+        currentSpot = spot;
+
+        if (!IsFishing)
         {
-            Debug.Log("进入钓鱼点成功: " + spot.name);
-
-            currentSpot = spot;
-
-            if (fishingUI == null)
-            {
-                Debug.LogError("fishingUI 为空，无法显示 UI");
-                return;
-            }
-
-            if (isFishing)
-            {
-                Debug.LogWarning("当前正在钓鱼中，不显示靠近提示");
-                return;
-            }
-
-            fishingUI.ShowHint("按 E 开始钓鱼");
+            state = FishingState.Ready;
+            ShowReadyHint();
         }
     }
 
     private void OnTriggerExit(Collider other)
     {
+        FishingSpot spot = GetSpotFromCollider(other);
+        if (spot == null || spot != currentSpot)
+        {
+            return;
+        }
 
+        currentSpot = null;
+
+        if (IsFishing)
+        {
+            CancelFishing();
+        }
+        else
+        {
+            state = FishingState.None;
+            fishingUI?.HideAll();
+        }
+    }
+
+    private static FishingSpot GetSpotFromCollider(Collider other)
+    {
         FishingSpot spot = other.GetComponent<FishingSpot>();
         if (spot == null)
         {
             spot = other.GetComponentInParent<FishingSpot>();
         }
 
-        if (spot != null && spot == currentSpot)
-        {
-
-            currentSpot = null;
-
-            if (isFishing)
-            {
-                StopFishing();
-            }
-            else if (fishingUI != null)
-            {
-                fishingUI.HideAll();
-            }
-        }
+        return spot;
     }
-
-    
 }

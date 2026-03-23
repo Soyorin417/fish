@@ -1,8 +1,8 @@
-using Game.Inventory.Impl;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Game.Inventory.Impl;
 
 public class InventoryUI : MonoBehaviour
 {
@@ -21,6 +21,7 @@ public class InventoryUI : MonoBehaviour
     public Button closeButton;
     public Button useButton;
     public Button dropButton;
+    public Button selectButton;
 
     private List<InventorySlotUI> slotUIs = new List<InventorySlotUI>();
     private InventoryItem selectedItem;

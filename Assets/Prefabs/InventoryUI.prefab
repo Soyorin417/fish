@@ -195,7 +195,7 @@ MonoBehaviour:
   closeButton: {fileID: 0}
   useButton: {fileID: 0}
   dropButton: {fileID: 0}
-  items: []
+  selectButton: {fileID: 0}
 --- !u!1 &1115315786331836226
 GameObject:
   m_ObjectHideFlags: 0
@@ -325,9 +325,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   icon: {fileID: 0}
-  nameText: {fileID: 0}
   amountText: {fileID: 0}
-  button: {fileID: 0}
+  highlight: {fileID: 0}
 --- !u!1 &2295777853006593185
 GameObject:
   m_ObjectHideFlags: 0
@@ -1174,8 +1173,9 @@ MonoBehaviour:
       m_Calls: []
   m_text: New Text
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 648f391288ec04942a57dee971c829bb, type: 2}
+  m_sharedMaterial: {fileID: -8936220046994362083, guid: 648f391288ec04942a57dee971c829bb,
+    type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

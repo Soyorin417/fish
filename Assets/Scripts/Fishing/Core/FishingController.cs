@@ -1,25 +1,17 @@
 using Game.Fishing.Data;
 using Game.Inventory;
+using Game.Inventory.Impl;
 using Game.Inventory.Interface;
 using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-
 namespace Game.Fishing.Core
 {
-    public class FishingController : MonoBehaviour, IFishingResultHandler
+    public class FishingController : MonoBehaviour, IFishingController
     {
-        public enum FishingState
-        {
-            Idle,
-            WaitingForBite,
-            PlayingMiniGame,
-            Result
-        }
-
-        [Header("交互")]
+        [Header("Interaction")]
         public KeyCode fishKey = KeyCode.E;
         public Transform player;
         public float interactDistance = 3f;
@@ -32,20 +24,20 @@ namespace Game.Fishing.Core
         [Header("MiniGame UI")]
         public Image progressFill;
 
-        [Header("等待设置")]
+        [Header("Wait Settings")]
         public float waitMinTime = 1.5f;
         public float waitMaxTime = 3.5f;
 
-        [Header("小游戏设置")]
+        [Header("Mini Game Settings")]
         public float miniGameDuration = 8f;
         public float successNeed = 1f;
         public float progressLosePerSecond = 0.25f;
         public float progressGainPerPress = 0.18f;
 
-        [Header("掉落")]
+        [Header("Loot")]
         public FishingLootTable lootTable;
 
-        [Header("背包服务")]
+        [Header("Inventory Service")]
         [SerializeField] private MonoBehaviour inventoryServiceSource;
 
         private IInventoryService inventoryService;
@@ -54,23 +46,34 @@ namespace Game.Fishing.Core
         private float miniGameTimer;
         private float progressValue;
 
+        public FishingState State => state;
+
+        public bool IsFishing =>
+            state == FishingState.WaitingForBite ||
+            state == FishingState.PlayingMiniGame ||
+            state == FishingState.Result;
+
         private void Awake()
         {
             inventoryService = inventoryServiceSource as IInventoryService;
 
             if (inventoryService == null && inventoryServiceSource != null)
             {
-                Debug.LogError("inventoryServiceSource 没有实现 IInventoryService 接口！");
+                Debug.LogError("inventoryServiceSource does not implement IInventoryService.");
             }
         }
 
         private void Start()
         {
-            if (fishingCanvas != null)
-                fishingCanvas.SetActive(false);
+            ResolveInventoryService();
 
-            SetHint("按 E 开始钓鱼");
-            SetResult("");
+            if (fishingCanvas != null)
+            {
+                fishingCanvas.SetActive(false);
+            }
+
+            SetHint("Press E to start fishing");
+            SetResult(string.Empty);
             SetProgress(0f);
         }
 
@@ -83,10 +86,6 @@ namespace Game.Fishing.Core
                     {
                         StartFishing();
                     }
-                    break;
-
-                case FishingState.WaitingForBite:
-                    // 这里等协程，不需要额外输入
                     break;
 
                 case FishingState.PlayingMiniGame:
@@ -102,21 +101,33 @@ namespace Game.Fishing.Core
             }
         }
 
+        public void CancelFishing()
+        {
+            ExitFishing();
+        }
+
         public void StartFishing()
         {
-            if (state != FishingState.Idle) return;
+            if (state != FishingState.Idle)
+            {
+                return;
+            }
 
             state = FishingState.WaitingForBite;
 
             if (fishingCanvas != null)
+            {
                 fishingCanvas.SetActive(true);
+            }
 
-            SetHint("等待鱼上钩...");
-            SetResult("");
+            SetHint("Waiting for a bite...");
+            SetResult(string.Empty);
             SetProgress(0f);
 
             if (fishingRoutine != null)
+            {
                 StopCoroutine(fishingRoutine);
+            }
 
             fishingRoutine = StartCoroutine(WaitForBiteRoutine());
         }
@@ -126,7 +137,10 @@ namespace Game.Fishing.Core
             float waitTime = Random.Range(waitMinTime, waitMaxTime);
             yield return new WaitForSeconds(waitTime);
 
-            EnterMiniGame();
+            if (state == FishingState.WaitingForBite)
+            {
+                EnterMiniGame();
+            }
         }
 
         private void EnterMiniGame()
@@ -135,8 +149,8 @@ namespace Game.Fishing.Core
             miniGameTimer = miniGameDuration;
             progressValue = 0f;
 
-            SetHint("连按 E 收杆！");
-            SetResult("");
+            SetHint("Tap E to reel in");
+            SetResult(string.Empty);
             SetProgress(progressValue);
         }
 
@@ -156,8 +170,7 @@ namespace Game.Fishing.Core
 
             if (progressValue >= successNeed)
             {
-                FishData fish = RollFish();
-                HandleFishResult(fish, 1);
+                FinishWithFish(RollFish(), 1);
                 return;
             }
 
@@ -171,86 +184,111 @@ namespace Game.Fishing.Core
         {
             if (lootTable == null)
             {
-                Debug.LogWarning("没有配置 FishingLootTable");
+                Debug.LogWarning("FishingLootTable is not assigned.");
                 return null;
             }
 
             return lootTable.Roll();
         }
 
-        public void OnFishingSuccess(ItemData fishItem, int amount)
-        {
-            state = FishingState.Result;
-
-            bool added = false;
-            if (fishItem != null && inventoryService != null)
-            {
-                added = inventoryService.AddItem(fishItem, amount);
-            }
-
-            if (fishItem == null)
-            {
-                SetResult("钓鱼成功，但没有配置鱼数据");
-            }
-            else if (added)
-            {
-                SetResult("钓到了：" + fishItem.itemName + " x" + amount);
-            }
-            else
-            {
-                SetResult("钓到了：" + fishItem.itemName + "，但背包已满");
-            }
-
-            SetHint("按 E 关闭");
-        }
-
-        public void HandleFishResult(FishData fishData, int amount = 1)
-        {
-            if (fishData == null)
-            {
-                Debug.LogWarning("FishData 为空");
-                return;
-            }
-
-            OnFishingSuccess(fishData.inventoryItem, amount);
-        }
-
         public void OnFishingFail()
         {
             state = FishingState.Result;
-            SetResult("鱼跑掉了");
-            SetHint("按 E 关闭");
+            SetResult("The fish got away.");
+            SetHint("Press E to close");
+        }
+
+        private void FinishWithFish(FishData fishData, int amount)
+        {
+            state = FishingState.Result;
+            SetResult(BuildCatchMessage(fishData, amount));
+            SetHint("Press E to close");
         }
 
         private void ExitFishing()
         {
             state = FishingState.Idle;
 
-            if (fishingCanvas != null)
-                fishingCanvas.SetActive(false);
+            if (fishingRoutine != null)
+            {
+                StopCoroutine(fishingRoutine);
+                fishingRoutine = null;
+            }
 
-            SetHint("按 E 开始钓鱼");
-            SetResult("");
+            if (fishingCanvas != null)
+            {
+                fishingCanvas.SetActive(false);
+            }
+
+            SetHint("Press E to start fishing");
+            SetResult(string.Empty);
             SetProgress(0f);
+        }
+
+        private void ResolveInventoryService()
+        {
+            if (inventoryService != null)
+            {
+                return;
+            }
+
+            inventoryService = inventoryServiceSource as IInventoryService;
+            if (inventoryService == null && InventoryManager.Instance != null)
+            {
+                inventoryService = InventoryManager.Instance;
+            }
+        }
+
+        private string BuildCatchMessage(FishData fishData, int amount)
+        {
+            if (fishData == null)
+            {
+                return "Caught something, but no FishData is configured.";
+            }
+
+            ItemData fishItem = fishData.inventoryItem;
+            if (fishItem == null)
+            {
+                return "Caught " + fishData.fishName + ", but no inventory item is configured.";
+            }
+
+            ResolveInventoryService();
+            if (inventoryService == null)
+            {
+                return "Caught " + fishItem.itemName + ", but no inventory service is available.";
+            }
+
+            bool added = inventoryService.AddItem(fishItem, amount);
+            if (added)
+            {
+                return "Caught " + fishItem.itemName + " x" + amount;
+            }
+
+            return "Caught " + fishItem.itemName + ", but the inventory is full.";
         }
 
         private void SetHint(string text)
         {
             if (hintText != null)
+            {
                 hintText.text = text;
+            }
         }
 
         private void SetResult(string text)
         {
             if (resultText != null)
+            {
                 resultText.text = text;
+            }
         }
 
         private void SetProgress(float value)
         {
             if (progressFill != null)
+            {
                 progressFill.fillAmount = value;
+            }
         }
     }
 }
-

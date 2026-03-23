@@ -4,18 +4,26 @@ namespace Game.Fishing.Core
 {
     public class FishingSystem : MonoBehaviour
     {
-        [SerializeField] private MonoBehaviour controller;
+        [SerializeField] private MonoBehaviour controllerSource;
 
-        public MonoBehaviour Controller => controller;
+        private IFishingController controller;
 
-        private void Update()
+        public IFishingController Controller => controller;
+        public FishingState State => controller != null ? controller.State : FishingState.None;
+
+        private void Awake()
         {
-            // 先留空，避免和旧版 FishingController 冲突
+            controller = controllerSource as IFishingController;
+
+            if (controller == null && controllerSource != null)
+            {
+                Debug.LogError("controllerSource does not implement IFishingController.");
+            }
         }
 
         public void CancelFishing()
         {
-            // 先留空，后面再接
+            controller?.CancelFishing();
         }
     }
 }
