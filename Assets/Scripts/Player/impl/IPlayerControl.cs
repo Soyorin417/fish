@@ -4,6 +4,7 @@ namespace Game.Player
     {
         void SetMoveEnabled(bool enabled);
         void SetLookEnabled(bool enabled);
+        void SetJumpEnabled(bool enabled);
         void PlayFishingAnimation(bool isFishing);
     }
 }

@@ -1,9 +1,9 @@
-using System.Collections;
-using UnityEngine;
-
 using Game.Fishing.Data;
 using Game.Fishing.Spots;
+using Game.Inventory.Impl;
 using Game.Player;
+using System.Collections;
+using UnityEngine;
 
 public class PlayerFishing : MonoBehaviour
 {
@@ -121,6 +121,7 @@ public class PlayerFishing : MonoBehaviour
         {
             playerControl.SetMoveEnabled(false);
             playerControl.SetLookEnabled(false);
+            playerControl.SetJumpEnabled(false);
             playerControl.PlayFishingAnimation(true);
         }
 
@@ -168,8 +169,6 @@ public class PlayerFishing : MonoBehaviour
         {
             timer -= Time.deltaTime;
 
-            Debug.Log("FishingFlow检查 -> catchProgress = " + catchProgress + ", timer = " + timer);
-
             if (catchProgress >= 1f)
             {
                 Debug.Log("触发 CatchFish");
@@ -187,7 +186,6 @@ public class PlayerFishing : MonoBehaviour
             yield return null;
         }
 
-        Debug.Log("时间到了，触发 FailFishing");
         FailFishing();
     }
     private void StartMiniGame()
@@ -296,10 +294,27 @@ public class PlayerFishing : MonoBehaviour
         StopCurrentRoutine();
 
         FishData fish = GetRandomFish();
-
         float size = Random.Range(fish.sizeMin, fish.sizeMax);
 
         Debug.Log("钓到了: " + fish.fishName + " 体型:" + size.ToString("F2"));
+
+        // 关键：写入背包
+        if (fish != null && fish.inventoryItem != null)
+        {
+            if (InventoryManager.Instance != null)
+            {
+                bool success = InventoryManager.Instance.AddItem(fish.inventoryItem, 1);
+                Debug.Log("写入背包结果: " + success);
+            }
+            else
+            {
+                Debug.LogError("InventoryManager.Instance 为空，无法把鱼加入背包");
+            }
+        }
+        else
+        {
+            Debug.LogError("FishData 或 fish.inventoryItem 为空，无法加入背包");
+        }
 
         if (fishingUI != null)
         {
@@ -338,9 +353,13 @@ public class PlayerFishing : MonoBehaviour
 
         if (playerControl != null)
         {
-            playerControl.SetMoveEnabled(true);
-            playerControl.SetLookEnabled(true);
-            playerControl.PlayFishingAnimation(false);
+            if (playerControl != null)
+            {
+                playerControl.SetMoveEnabled(true);
+                playerControl.SetLookEnabled(true);
+                playerControl.SetJumpEnabled(true);
+                playerControl.PlayFishingAnimation(false);
+            }
         }
 
         if (fishingUI != null)
@@ -368,7 +387,6 @@ public class PlayerFishing : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        Debug.Log("进入触发器: " + other.name);
 
         FishingSpot spot = other.GetComponent<FishingSpot>();
         if (spot == null)
@@ -400,7 +418,6 @@ public class PlayerFishing : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        Debug.Log("退出触发器: " + other.name);
 
         FishingSpot spot = other.GetComponent<FishingSpot>();
         if (spot == null)
@@ -410,7 +427,6 @@ public class PlayerFishing : MonoBehaviour
 
         if (spot != null && spot == currentSpot)
         {
-            Debug.Log("钓鱼过程中离开触发器，isFishing = " + isFishing + ", inMiniGame = " + inMiniGame);
 
             currentSpot = null;
 

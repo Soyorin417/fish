@@ -8,6 +8,7 @@ public class InventorySlotUI : MonoBehaviour
     public TMP_Text nameText;
     public TMP_Text amountText;
     public Button button;
+    public GameObject highlight;
 
     private InventoryItem currentItem;
     private InventoryUI inventoryUI;
@@ -36,6 +37,9 @@ public class InventorySlotUI : MonoBehaviour
             icon.enabled = item.itemData.icon != null;
         }
 
+        if (highlight != null)
+            highlight.SetActive(false);
+
         if (button != null)
         {
             button.onClick.RemoveAllListeners();
@@ -49,8 +53,14 @@ public class InventorySlotUI : MonoBehaviour
     {
         if (currentItem != null && inventoryUI != null)
         {
-            inventoryUI.SelectItem(currentItem);
+            inventoryUI.SelectItem(this, currentItem);
         }
+    }
+
+    public void SetSelected(bool selected)
+    {
+        if (highlight != null)
+            highlight.SetActive(selected);
     }
 
     public void Clear()
@@ -65,6 +75,9 @@ public class InventorySlotUI : MonoBehaviour
             icon.sprite = null;
             icon.enabled = false;
         }
+
+        if (highlight != null)
+            highlight.SetActive(false);
 
         if (button != null)
         {

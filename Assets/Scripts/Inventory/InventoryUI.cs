@@ -24,11 +24,10 @@ public class InventoryUI : MonoBehaviour
 
     private List<InventorySlotUI> slotUIs = new List<InventorySlotUI>();
     private InventoryItem selectedItem;
+    private InventorySlotUI currentSelectedSlot;
 
     private void Start()
     {
-        if (closeButton != null)
-            closeButton.onClick.AddListener(CloseInventory);
 
         if (useButton != null)
             useButton.onClick.AddListener(UseSelectedItem);
@@ -36,48 +35,13 @@ public class InventoryUI : MonoBehaviour
         if (dropButton != null)
             dropButton.onClick.AddListener(DropSelectedItem);
 
+        if (InventoryManager.Instance != null)
+        {
+            InventoryManager.Instance.onInventoryChanged += RefreshUI;
+        }
+
         RefreshUI();
         ClearSelection();
-        CloseInventory();
-    }
-
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.B))
-        {
-            ToggleInventory();
-        }
-    }
-
-    public void ToggleInventory()
-    {
-        if (panelRoot == null) return;
-
-        bool show = !panelRoot.activeSelf;
-        panelRoot.SetActive(show);
-
-        Cursor.visible = show;
-        Cursor.lockState = show ? CursorLockMode.None : CursorLockMode.Locked;
-    }
-
-    public void OpenInventory()
-    {
-        if (panelRoot != null)
-        {
-            panelRoot.SetActive(true);
-            Cursor.visible = true;
-            Cursor.lockState = CursorLockMode.None;
-        }
-    }
-
-    public void CloseInventory()
-    {
-        if (panelRoot != null)
-        {
-            panelRoot.SetActive(false);
-            Cursor.visible = false;
-            Cursor.lockState = CursorLockMode.Locked;
-        }
     }
 
     public void RefreshUI()
@@ -127,9 +91,16 @@ public class InventoryUI : MonoBehaviour
         }
     }
 
-    public void SelectItem(InventoryItem item)
+    public void SelectItem(InventorySlotUI slot, InventoryItem item)
     {
+        if (currentSelectedSlot != null)
+            currentSelectedSlot.SetSelected(false);
+
+        currentSelectedSlot = slot;
         selectedItem = item;
+
+        if (currentSelectedSlot != null)
+            currentSelectedSlot.SetSelected(true);
 
         if (item == null || item.itemData == null)
         {
@@ -157,6 +128,12 @@ public class InventoryUI : MonoBehaviour
     {
         selectedItem = null;
 
+        if (currentSelectedSlot != null)
+        {
+            currentSelectedSlot.SetSelected(false);
+            currentSelectedSlot = null;
+        }
+
         if (itemIcon != null)
         {
             itemIcon.sprite = null;
@@ -178,12 +155,25 @@ public class InventoryUI : MonoBehaviour
 
         if (selectedItem.amount <= 0)
         {
-            InventoryManager.Instance.RemoveItem(selectedItem.itemData, selectedItem.amount);
+            InventoryManager.Instance.RemoveItem(selectedItem.itemData, 1);
             ClearSelection();
         }
         else
         {
-            SelectItem(selectedItem);
+            if (itemIcon != null)
+            {
+                itemIcon.sprite = selectedItem.itemData.icon;
+                itemIcon.enabled = selectedItem.itemData.icon != null;
+            }
+
+            if (itemNameText != null)
+                itemNameText.text = selectedItem.itemData.itemName;
+
+            if (itemDescText != null)
+                itemDescText.text = selectedItem.itemData.description;
+
+            if (itemAmountText != null)
+                itemAmountText.text = "数量 x" + selectedItem.amount;
         }
 
         RefreshUI();
@@ -198,5 +188,13 @@ public class InventoryUI : MonoBehaviour
         InventoryManager.Instance.RemoveItem(selectedItem.itemData, selectedItem.amount);
         ClearSelection();
         RefreshUI();
+    }
+
+    private void OnDestroy()
+    {
+        if (InventoryManager.Instance != null)
+        {
+            InventoryManager.Instance.onInventoryChanged -= RefreshUI;
+        }
     }
 }

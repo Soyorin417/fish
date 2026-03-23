@@ -37,26 +37,16 @@ namespace Game.Inventory.Impl
             Instance = this;
         }
 
-        private void Start()
-        {
-            // 测试数据
-            if (Items.Count == 0)
-            {
-                Debug.Log("添加测试物品");
-
-                AddItem(testItemData, 20); // 拖一个 ItemData 进来
-            }
-        }
-
         public void ClearInventory()
         {
             items.Clear();
-            onInventoryChanged?.Invoke();
+            NotifyChanged();
         }
 
 
         public bool AddItem(ItemData itemData, int amount = 1)
         {
+            Debug.Log("AddItem 被调用: " + itemData.itemName);
             if (itemData == null || amount <= 0) return false;
 
             if (itemData.stackable)
@@ -114,6 +104,7 @@ namespace Game.Inventory.Impl
 
         public void HandleFishResult(FishData fishData, int amount = 1)
         {
+            Debug.Log("HandleFishResult 被调用");
             if (fishData == null || fishData.inventoryItem == null)
             {
                 Debug.LogWarning("FishData 或 inventoryItem 未配置，无法加入背包");
@@ -130,7 +121,14 @@ namespace Game.Inventory.Impl
 
         private void NotifyChanged()
         {
+            Debug.Log("NotifyChanged 被调用");
+            onInventoryChanged?.Invoke();
             OnInventoryChanged?.Invoke();
+
+            if (InventoryJsonLoader.Instance != null)
+            {
+                InventoryJsonLoader.Instance.Save();
+            }
         }
     }
 }
