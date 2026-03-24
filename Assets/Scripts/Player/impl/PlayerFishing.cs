@@ -1,6 +1,7 @@
 using Game.Fishing.Core;
 using Game.Fishing.Data;
 using Game.Fishing.Spots;
+using Game.Inventory;
 using Game.Inventory.Interface;
 using Game.Player;
 using System.Collections;
@@ -19,6 +20,7 @@ public class PlayerFishing : MonoBehaviour, IFishingController
 
     [Header("UI")]
     public FishingUI fishingUI;
+    [SerializeField] private InventoryToggle inventoryToggle;
 
     [Header("Services")]
     [SerializeField] private MonoBehaviour inventoryServiceSource;
@@ -72,6 +74,8 @@ public class PlayerFishing : MonoBehaviour, IFishingController
     private int fishZoneDir = 1;
     private float playerBarCenter;
     private float catchProgress;
+    private bool fishingUIModeRequested;
+    private bool warnedMissingInventoryToggle;
 
     public FishingState State => state;
 
@@ -96,6 +100,7 @@ public class PlayerFishing : MonoBehaviour, IFishingController
     {
         ResolveFishingUI();
         ResolveInventoryService();
+        ResolveInventoryToggle();
 
         fishingUI?.HideAll();
         state = currentSpot != null ? FishingState.Ready : FishingState.None;
@@ -135,6 +140,15 @@ public class PlayerFishing : MonoBehaviour, IFishingController
 
         state = FishingState.None;
         fishingUI?.HideAll();
+    }
+
+    private void OnDisable()
+    {
+        StopRoutine(ref fishingRoutine);
+        StopRoutine(ref finishRoutine);
+        ApplyPlayerFishingLock(false);
+        fishingUI?.HideAll();
+        state = currentSpot != null ? FishingState.Ready : FishingState.None;
     }
 
     private void StartFishing()
@@ -316,19 +330,22 @@ public class PlayerFishing : MonoBehaviour, IFishingController
         fishingUI?.HideAll();
     }
 
-    private FishingLootTable GetActiveLootTable()
-    {
-        if (currentSpot != null && currentSpot.LootTable != null)
-        {
-            return currentSpot.LootTable;
-        }
-
-        return defaultLootTable;
-    }
-
     private FishData RollFish()
     {
-        FishingLootTable lootTable = GetActiveLootTable();
+        if (currentSpot != null)
+        {
+            FishData fishFromSpotConfig = FishingSpotConfigDatabase.RollFish(currentSpot);
+            if (fishFromSpotConfig != null)
+            {
+                return fishFromSpotConfig;
+            }
+
+            Debug.LogWarning(
+                "PlayerFishing failed to roll fish from spot config for spotId=" + currentSpot.SpotId +
+                ". Falling back to legacy loot table or fishTable.");
+        }
+
+        FishingLootTable lootTable = defaultLootTable;
         if (lootTable != null)
         {
             return lootTable.Roll();
@@ -410,9 +427,28 @@ public class PlayerFishing : MonoBehaviour, IFishingController
             return false;
         }
 
-        if (fish.inventoryItem == null)
+        if (string.IsNullOrWhiteSpace(fish.fishName))
         {
-            message = "Caught " + fish.fishName + ", but no inventory item is configured.";
+            fish.fishName = fish.name;
+        }
+
+        string itemId = null;
+        bool stackable = true;
+
+        if (fish.inventoryItem != null)
+        {
+            itemId = fish.inventoryItem.itemId;
+            stackable = fish.inventoryItem.stackable;
+        }
+
+        if (string.IsNullOrWhiteSpace(itemId))
+        {
+            itemId = fish.fishId;
+        }
+
+        if (string.IsNullOrWhiteSpace(itemId))
+        {
+            message = "Caught " + fish.fishName + ", but no inventory item id is configured.";
             return false;
         }
 
@@ -423,7 +459,31 @@ public class PlayerFishing : MonoBehaviour, IFishingController
             return false;
         }
 
-        bool success = inventoryService.AddItem(fish.inventoryItem, amount);
+        ItemDataRuntime itemData = ItemDatabaseRuntime.FindById(itemId);
+        if (itemData != null)
+        {
+            stackable = itemData.stackable;
+        }
+        else
+        {
+            Debug.LogWarning(
+                "PlayerFishing could not find item config for itemId=" + itemId +
+                ". Falling back to fish inventoryItem.stackable=" + stackable + ".");
+        }
+
+        int beforeCount = inventoryService.GetItemCount(itemId);
+
+        bool success = inventoryService.AddItem(itemId, amount, stackable);
+        int afterCount = inventoryService.GetItemCount(itemId);
+
+        Debug.Log(
+            "PlayerFishing TryAddFishToInventory itemId=" + itemId +
+            " amount=" + amount +
+            " stackable=" + stackable +
+            " beforeCount=" + beforeCount +
+            " afterCount=" + afterCount +
+            " success=" + success);
+
         message = success
             ? "Caught " + fish.fishName
             : "Caught " + fish.fishName + ", but the inventory is full.";
@@ -485,15 +545,38 @@ public class PlayerFishing : MonoBehaviour, IFishingController
 
     private void ApplyPlayerFishingLock(bool locked)
     {
-        if (playerControl == null)
+        if (playerControl != null)
+        {
+            playerControl.PlayFishingAnimation(locked);
+        }
+
+        if (locked == fishingUIModeRequested)
         {
             return;
         }
 
-        playerControl.SetMoveEnabled(!locked);
-        playerControl.SetLookEnabled(!locked);
-        playerControl.SetJumpEnabled(!locked);
-        playerControl.PlayFishingAnimation(locked);
+        ResolveInventoryToggle();
+        if (inventoryToggle != null)
+        {
+            if (locked)
+            {
+                inventoryToggle.PushUIMode();
+            }
+            else if (inventoryToggle.isActiveAndEnabled)
+            {
+                inventoryToggle.PopUIMode();
+            }
+
+            fishingUIModeRequested = locked;
+            return;
+        }
+
+        if (!warnedMissingInventoryToggle)
+        {
+            Debug.LogError("PlayerFishing could not find InventoryToggle. UI/player state can not be synchronized correctly.");
+            warnedMissingInventoryToggle = true;
+        }
+        fishingUIModeRequested = locked;
     }
 
     private void ShowWaitingForBite()
@@ -586,5 +669,13 @@ public class PlayerFishing : MonoBehaviour, IFishingController
         }
 
         return spot;
+    }
+
+    private void ResolveInventoryToggle()
+    {
+        if (inventoryToggle == null)
+        {
+            inventoryToggle = FindObjectOfType<InventoryToggle>(true);
+        }
     }
 }

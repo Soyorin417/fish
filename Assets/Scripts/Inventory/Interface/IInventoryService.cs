@@ -12,12 +12,11 @@ namespace Game.Inventory.Interface
         event Action OnInventoryChanged;
 
         IReadOnlyList<InventoryItem> GetItems();
-        InventoryItem FindItem(ItemData itemData);
+        InventoryItem FindItem(string itemId);
         void ClearInventory();
-        bool AddItem(ItemData itemData, int amount = 1);
-        bool RemoveItem(ItemData itemData, int amount = 1);
-        int GetItemCount(ItemData itemData);
-        bool HasSpace(ItemData itemData, int amount = 1);
+        bool AddItem(string itemId, int amount = 1, bool stackable = true);
+        bool RemoveItem(string itemId, int amount = 1, bool stackable = true);
+        int GetItemCount(string itemId);
+        bool HasSpace(string itemId, int amount = 1, bool stackable = true);
     }
 }
-

@@ -17,11 +17,17 @@ namespace Game.Synthesis.Core
 
         private int interactorCount;
 
+        /// <summary>
+        /// 初始化交互提示的显示状态。
+        /// </summary>
         private void Start()
         {
             UpdatePrompt();
         }
 
+        /// <summary>
+        /// 持续检测交互按键，并在满足条件时打开合成界面。
+        /// </summary>
         private void Update()
         {
             if (Input.GetKeyDown(interactKey))
@@ -44,6 +50,9 @@ namespace Game.Synthesis.Core
             }
         }
 
+        /// <summary>
+        /// 当交互对象进入触发范围时，记录可交互状态并刷新提示。
+        /// </summary>
         private void OnTriggerEnter(Collider other)
         {
             Debug.Log("进入触发器: " + other.name + " tag=" + other.tag);
@@ -59,6 +68,9 @@ namespace Game.Synthesis.Core
             UpdatePrompt();
         }
 
+        /// <summary>
+        /// 当交互对象离开触发范围时，取消可交互状态并刷新提示。
+        /// </summary>
         private void OnTriggerExit(Collider other)
         {
             Debug.Log("离开触发器: " + other.name + " tag=" + other.tag);
@@ -73,6 +85,9 @@ namespace Game.Synthesis.Core
             UpdatePrompt();
         }
 
+        /// <summary>
+        /// 判断进入触发器的对象是否为允许交互的目标。
+        /// </summary>
         private bool IsValidInteractor(Collider other)
         {
             if (other == null)
@@ -88,6 +103,9 @@ namespace Game.Synthesis.Core
             return other.CompareTag(interactorTag);
         }
 
+        /// <summary>
+        /// 根据当前交互状态刷新提示文本和提示物体的显示状态。
+        /// </summary>
         private void UpdatePrompt()
         {
             bool shouldShow = interactorCount > 0 && synthesisUI != null && !synthesisUI.IsVisible;

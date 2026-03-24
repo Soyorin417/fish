@@ -1,0 +1,178 @@
+[
+  {
+    "id": "fish_001",
+    "name": "鲫鱼",
+    "icon": "Icons/fish_001",
+    "description": "新手教学核心鱼",
+    "stackable": true,
+    "maxStack": 99
+  },
+  {
+    "id": "fish_002",
+    "name": "鲤鱼",
+    "icon": "Icons/fish_002",
+    "description": "综合收益稳定",
+    "stackable": true,
+    "maxStack": 99
+  },
+  {
+    "id": "fish_003",
+    "name": "草鱼",
+    "icon": "Icons/fish_003",
+    "description": "适合中期刷金币",
+    "stackable": true,
+    "maxStack": 99
+  },
+  {
+    "id": "fish_004",
+    "name": "鲢鱼",
+    "icon": "Icons/fish_004",
+    "description": "群游鱼代表",
+    "stackable": true,
+    "maxStack": 99
+  },
+  {
+    "id": "fish_005",
+    "name": "鳙鱼",
+    "icon": "Icons/fish_005",
+    "description": "中后期收益鱼",
+    "stackable": true,
+    "maxStack": 99
+  },
+  {
+    "id": "fish_006",
+    "name": "黑鱼",
+    "icon": "Icons/fish_006",
+    "description": "拉扯难度高",
+    "stackable": true,
+    "maxStack": 99
+  },
+  {
+    "id": "fish_007",
+    "name": "鲶鱼",
+    "icon": "Icons/fish_007",
+    "description": "夜钓收益鱼",
+    "stackable": true,
+    "maxStack": 99
+  },
+  {
+    "id": "fish_008",
+    "name": "黄颡鱼",
+    "icon": "Icons/fish_008",
+    "description": "中级钓点常驻",
+    "stackable": true,
+    "maxStack": 99
+  },
+  {
+    "id": "fish_009",
+    "name": "鳜鱼",
+    "icon": "Icons/fish_009",
+    "description": "高难捕食者",
+    "stackable": true,
+    "maxStack": 99
+  },
+  {
+    "id": "fish_010",
+    "name": "青鱼",
+    "icon": "Icons/fish_010",
+    "description": "巨物线代表",
+    "stackable": true,
+    "maxStack": 99
+  },
+  {
+    "id": "fish_011",
+    "name": "泥鳅",
+    "icon": "Icons/fish_011",
+    "description": "浅滩过渡鱼",
+    "stackable": true,
+    "maxStack": 99
+  },
+  {
+    "id": "fish_012",
+    "name": "黄鳝",
+    "icon": "Icons/fish_012",
+    "description": "洞穴系彩蛋前置",
+    "stackable": true,
+    "maxStack": 99
+  },
+  {
+    "id": "fish_013",
+    "name": "罗非鱼",
+    "icon": "Icons/fish_013",
+    "description": "稳定出货",
+    "stackable": true,
+    "maxStack": 99
+  },
+  {
+    "id": "fish_014",
+    "name": "白条",
+    "icon": "Icons/fish_014",
+    "description": "新手高频反馈鱼",
+    "stackable": true,
+    "maxStack": 99
+  },
+  {
+    "id": "fish_015",
+    "name": "翘嘴",
+    "icon": "Icons/fish_015",
+    "description": "表层挑战鱼",
+    "stackable": true,
+    "maxStack": 99
+  },
+  {
+    "id": "fish_016",
+    "name": "团头鲂",
+    "icon": "Icons/fish_016",
+    "description": "图鉴完成度补位",
+    "stackable": true,
+    "maxStack": 99
+  },
+  {
+    "id": "fish_017",
+    "name": "银鱼",
+    "icon": "Icons/fish_017",
+    "description": "观赏和收藏兼顾",
+    "stackable": true,
+    "maxStack": 99
+  },
+  {
+    "id": "fish_018",
+    "name": "玻璃鲶",
+    "icon": "Icons/fish_018",
+    "description": "夜钓展示价值高",
+    "stackable": true,
+    "maxStack": 99
+  },
+  {
+    "id": "fish_019",
+    "name": "金龙鱼",
+    "icon": "Icons/fish_019",
+    "description": "终局图鉴目标",
+    "stackable": true,
+    "maxStack": 99
+  },
+  {
+    "id": "fish_020",
+    "name": "电鳗",
+    "icon": "Icons/fish_020",
+    "description": "装备联动核心鱼",
+    "stackable": true,
+    "maxStack": 99
+  },
+  {
+    "id": "fish_021",
+    "name": "小丑鱼",
+    "icon": "Icons/fish_021",
+    "description": "观赏向稀有鱼",
+    "stackable": true,
+    "maxStack": 99
+  },
+  {
+    "id": "fish_022",
+    "name": "东星斑",
+    "icon": "Icons/fish_022",
+    "description": "高价值掠食鱼",
+    "stackable": true,
+    "maxStack": 99
+  }
+]

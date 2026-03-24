@@ -5,10 +5,19 @@ namespace Game.Fishing.Spots
 {
     public class FishingSpot : MonoBehaviour
     {
-        [SerializeField] private FishingLootTable lootTable;
-        [SerializeField] private float interactDistance = 3f;
+        [SerializeField] private string spotId;
 
-        public FishingLootTable LootTable => lootTable;
-        public float InteractDistance => interactDistance;
+        public string SpotId => spotId;
+
+        public FishingSpotConfig GetConfig()
+        {
+            if (string.IsNullOrWhiteSpace(spotId))
+            {
+                Debug.LogWarning("FishingSpot on " + name + " has an empty spotId.");
+                return null;
+            }
+
+            return FishingSpotConfigDatabase.FindById(spotId);
+        }
     }
 }

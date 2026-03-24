@@ -1,6 +1,6 @@
-using System.Collections.Generic;
 using System.IO;
 using Game.Inventory;
+using Game.Inventory.Impl;
 using Game.Inventory.Interface;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -12,9 +12,8 @@ public class InventoryJsonLoader : MonoBehaviour
     [FormerlySerializedAs("inventoryManagerSource")]
     [SerializeField] private MonoBehaviour inventoryServiceSource;
 
-    public List<ItemData> itemDatabase = new List<ItemData>();
-
     private IInventoryService inventoryService;
+    private InventoryManager inventoryManager;
     private bool suppressAutoSave;
 
     private string JsonPath =>
@@ -82,23 +81,29 @@ public class InventoryJsonLoader : MonoBehaviour
 
             foreach (InventoryItemJson item in root.items)
             {
-                ItemData data = FindItem(item.itemId);
-
-                if (data == null)
+                if (item == null || string.IsNullOrWhiteSpace(item.itemId) || item.amount <= 0)
                 {
-                    Debug.LogWarning("Item not found in database: " + item.itemId);
+                    Debug.LogWarning("Skipping invalid inventory JSON item during load.");
                     continue;
                 }
 
-                inventoryService.AddItem(data, item.amount);
+                bool stackable = ResolveStackableForLoad(item.itemId);
+                Debug.Log(
+                    "Inventory Load item itemId=" + item.itemId +
+                    " amount=" + item.amount +
+                    " resolvedStackable=" + stackable);
+
+                inventoryService.AddItem(item.itemId, item.amount, stackable);
             }
+
+            NormalizeInventory("Load post-process");
         }
         finally
         {
             suppressAutoSave = false;
         }
 
-        Debug.Log("Inventory JSON loaded.");
+        Debug.Log("Inventory JSON loaded. Final items: " + GetInventorySummary());
     }
 
     public void Save()
@@ -109,27 +114,31 @@ public class InventoryJsonLoader : MonoBehaviour
             return;
         }
 
+        NormalizeInventory("Save pre-serialize");
+
         InventoryJsonRoot root = new InventoryJsonRoot();
 
         foreach (InventoryItem invItem in inventoryService.Items)
         {
-            if (invItem == null || invItem.itemData == null)
+            if (invItem == null)
             {
                 continue;
             }
 
-            if (string.IsNullOrEmpty(invItem.itemData.itemId))
+            if (string.IsNullOrWhiteSpace(invItem.itemId))
             {
-                Debug.LogWarning("Skipping item with empty itemId: " + invItem.itemData.name);
+                Debug.LogWarning("Skipping item with empty itemId.");
                 continue;
             }
 
             root.items.Add(new InventoryItemJson
             {
-                itemId = invItem.itemData.itemId,
+                itemId = invItem.itemId,
                 amount = invItem.amount
             });
         }
+
+        Debug.Log("Inventory Save final items: " + GetInventorySummary());
 
         string dir = Path.GetDirectoryName(JsonPath);
         if (!Directory.Exists(dir))
@@ -153,19 +162,6 @@ public class InventoryJsonLoader : MonoBehaviour
         Save();
     }
 
-    private ItemData FindItem(string id)
-    {
-        foreach (ItemData item in itemDatabase)
-        {
-            if (item != null && item.itemId == id)
-            {
-                return item;
-            }
-        }
-
-        return null;
-    }
-
     private bool ResolveInventoryService()
     {
         if (inventoryService != null)
@@ -181,6 +177,7 @@ public class InventoryJsonLoader : MonoBehaviour
 
         if (inventoryService != null)
         {
+            inventoryManager = inventoryService as InventoryManager;
             return true;
         }
 
@@ -190,10 +187,55 @@ public class InventoryJsonLoader : MonoBehaviour
             {
                 inventoryServiceSource = behaviour;
                 inventoryService = service;
+                inventoryManager = service as InventoryManager;
                 return true;
             }
         }
 
         return false;
+    }
+
+    private bool ResolveStackableForLoad(string itemId)
+    {
+        ItemDataRuntime itemData = ItemDatabaseRuntime.FindById(itemId);
+        if (itemData != null)
+        {
+            return itemData.stackable;
+        }
+
+        Debug.LogWarning(
+            "Inventory Load could not find item config for itemId=" + itemId +
+            ". Falling back to stackable=true.");
+        return true;
+    }
+
+    private void NormalizeInventory(string context)
+    {
+        if (inventoryManager == null)
+        {
+            Debug.LogWarning("Inventory " + context + " skipped manager normalization because the concrete InventoryManager was not found.");
+            return;
+        }
+
+        bool changed = inventoryManager.NormalizeItems(context, false);
+        Debug.Log(
+            "Inventory " + context +
+            " normalizeChanged=" + changed +
+            " summary=" + inventoryManager.GetItemsDebugSummary());
+    }
+
+    private string GetInventorySummary()
+    {
+        if (inventoryManager != null)
+        {
+            return inventoryManager.GetItemsDebugSummary();
+        }
+
+        if (inventoryService == null || inventoryService.Items == null || inventoryService.Items.Count == 0)
+        {
+            return "(empty)";
+        }
+
+        return "entries=" + inventoryService.Items.Count;
     }
 }

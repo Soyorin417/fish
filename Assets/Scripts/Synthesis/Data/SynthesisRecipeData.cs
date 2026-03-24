@@ -11,7 +11,7 @@ namespace Game.Synthesis.Data
         public string recipeName;
         public FishData inputFishA;
         public FishData inputFishB;
-        public ItemData outputItem;
+        public ItemDataRuntime outputItem;
         public bool orderInsensitive = true;
 
         [TextArea]

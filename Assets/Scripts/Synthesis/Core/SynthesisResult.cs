@@ -10,7 +10,7 @@ namespace Game.Synthesis.Core
         public string message;
         public InventoryItem inputA;
         public InventoryItem inputB;
-        public ItemData outputItemData;
+        public ItemDataRuntime outputItemDataRuntime;
         public int outputAmount;
         public SynthesisRecipeData recipe;
 
@@ -22,7 +22,7 @@ namespace Game.Synthesis.Core
                 message = message,
                 inputA = inputA,
                 inputB = inputB,
-                outputItemData = recipe != null ? recipe.outputItem : null,
+                outputItemDataRuntime = recipe != null ? recipe.outputItem : null,
                 outputAmount = 0,
                 recipe = recipe
             };
@@ -36,7 +36,7 @@ namespace Game.Synthesis.Core
                 message = message,
                 inputA = inputA,
                 inputB = inputB,
-                outputItemData = recipe != null ? recipe.outputItem : null,
+                outputItemDataRuntime = recipe != null ? recipe.outputItem : null,
                 outputAmount = outputAmount,
                 recipe = recipe
             };

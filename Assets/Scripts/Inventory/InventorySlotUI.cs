@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Game.Inventory;
 using TMPro;
 using UnityEngine;
@@ -21,10 +21,8 @@ public class InventorySlotUI : MonoBehaviour
         currentItem = item;
         onSelected = onSelectedCallback;
 
-        if (item == null || item.itemData == null)
+        if (item == null || string.IsNullOrWhiteSpace(item.itemId))
         {
-            Debug.Log("SetData: item is null");
-
             if (icon != null)
             {
                 icon.sprite = null;
@@ -40,13 +38,32 @@ public class InventorySlotUI : MonoBehaviour
             return;
         }
 
-        Debug.Log("SetData item: " + item.itemData.itemName);
-        Debug.Log("SetData icon missing: " + (item.itemData.icon == null));
+        ItemDataRuntime itemData = ItemDatabaseRuntime.FindById(item.itemId);
+
+        if (itemData == null)
+        {
+            Debug.LogWarning("SetData item config missing: " + item.itemId);
+
+            if (icon != null)
+            {
+                icon.sprite = null;
+                icon.enabled = false;
+            }
+
+            if (amountText != null)
+            {
+                amountText.text = item.amount > 1 ? "x" + item.amount : string.Empty;
+            }
+
+            SetSelected(false);
+            return;
+        }
 
         if (icon != null)
         {
-            icon.sprite = item.itemData.icon;
-            icon.enabled = item.itemData.icon != null;
+            Sprite sp = itemData.LoadIcon();
+            icon.sprite = sp;
+            icon.enabled = sp != null;
         }
 
         if (amountText != null)
@@ -59,9 +76,7 @@ public class InventorySlotUI : MonoBehaviour
 
     public void OnClick()
     {
-        Debug.Log("click success");
-
-        if (currentItem == null || currentItem.itemData == null)
+        if (currentItem == null || string.IsNullOrWhiteSpace(currentItem.itemId))
         {
             return;
         }
@@ -77,4 +92,3 @@ public class InventorySlotUI : MonoBehaviour
         }
     }
 }
-

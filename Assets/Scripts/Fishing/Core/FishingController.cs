@@ -260,10 +260,15 @@ namespace Game.Fishing.Core
                 return "Caught something, but no FishData is configured.";
             }
 
-            ItemData fishItem = fishData.inventoryItem;
+            ItemDataRuntime fishItem = fishData.inventoryItem;
             if (fishItem == null)
             {
                 return "Caught " + fishData.fishName + ", but no inventory item is configured.";
+            }
+
+            if (string.IsNullOrWhiteSpace(fishItem.itemId))
+            {
+                return "Caught " + fishData.fishName + ", but itemId is empty.";
             }
 
             ResolveInventoryService();
@@ -272,7 +277,36 @@ namespace Game.Fishing.Core
                 return "Caught " + fishItem.itemName + ", but no inventory service is available.";
             }
 
-            bool added = inventoryService.AddItem(fishItem, amount);
+            bool stackable = fishItem.stackable;
+            ItemDataRuntime runtimeItem = ItemDatabaseRuntime.FindById(fishItem.itemId);
+            if (runtimeItem != null)
+            {
+                stackable = runtimeItem.stackable;
+            }
+            else
+            {
+                Debug.LogWarning(
+                    "FishingController could not find item config for itemId=" + fishItem.itemId +
+                    ". Falling back to fish inventoryItem.stackable=" + stackable + ".");
+            }
+
+            int beforeCount = inventoryService.GetItemCount(fishItem.itemId);
+
+            bool added = inventoryService.AddItem(
+                fishItem.itemId,
+                amount,
+                stackable
+            );
+
+            int afterCount = inventoryService.GetItemCount(fishItem.itemId);
+            Debug.Log(
+                "FishingController catch add itemId=" + fishItem.itemId +
+                " amount=" + amount +
+                " stackable=" + stackable +
+                " beforeCount=" + beforeCount +
+                " afterCount=" + afterCount +
+                " success=" + added);
+
             if (added)
             {
                 return "Caught " + fishItem.itemName + " x" + amount;

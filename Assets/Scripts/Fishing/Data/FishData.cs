@@ -10,7 +10,7 @@ namespace Game.Fishing.Data
         public string fishName;
         public Sprite icon;
 
-        public ItemData inventoryItem;
+        public ItemDataRuntime inventoryItem;
 
         public int rarity = 1;
 

@@ -32,7 +32,8 @@ public class InventoryUI : MonoBehaviour, IInventoryView
 
     private readonly List<InventorySlotUI> slotUIs = new List<InventorySlotUI>();
     private IInventoryService inventoryService;
-    private ItemData selectedItemData;
+    private InventoryToggle inventoryToggle;
+    private string selectedItemId;
     private InventorySlotUI currentSelectedSlot;
     private Action<InventoryItem> selectionCallback;
 
@@ -41,6 +42,7 @@ public class InventoryUI : MonoBehaviour, IInventoryView
     private void Start()
     {
         ResolveInventoryService();
+        ResolveInventoryToggle();
 
         if (useButton != null)
         {
@@ -55,6 +57,11 @@ public class InventoryUI : MonoBehaviour, IInventoryView
         if (selectButton != null)
         {
             selectButton.onClick.AddListener(ConfirmSelectedItemSelection);
+        }
+
+        if (closeButton != null)
+        {
+            closeButton.onClick.AddListener(RequestClose);
         }
 
         if (inventoryService != null)
@@ -116,7 +123,9 @@ public class InventoryUI : MonoBehaviour, IInventoryView
             slotUI.SetData(item, SelectItem);
             slotUIs.Add(slotUI);
 
-            if (selectedItemData != null && item != null && item.itemData == selectedItemData)
+            if (!string.IsNullOrWhiteSpace(selectedItemId) &&
+                item != null &&
+                item.itemId == selectedItemId)
             {
                 currentSelectedSlot = slotUI;
             }
@@ -130,9 +139,20 @@ public class InventoryUI : MonoBehaviour, IInventoryView
         SyncSelectionDetails();
     }
 
-    public void SelectItem(InventorySlotUI slot, ItemData itemData)
+    public void SelectItem(InventorySlotUI slot, ItemDataRuntime itemData)
     {
-        InventoryItem selectedItem = slot != null ? slot.CurrentItem : null;
+        if (itemData == null)
+        {
+            SelectItem(slot, (InventoryItem)null);
+            return;
+        }
+
+        InventoryItem selectedItem = null;
+        if (inventoryService != null && !string.IsNullOrWhiteSpace(itemData.itemId))
+        {
+            selectedItem = inventoryService.FindItem(itemData.itemId);
+        }
+
         SelectItem(slot, selectedItem);
     }
 
@@ -144,7 +164,7 @@ public class InventoryUI : MonoBehaviour, IInventoryView
         }
 
         currentSelectedSlot = slot;
-        selectedItemData = item != null ? item.itemData : null;
+        selectedItemId = item != null ? item.itemId : null;
 
         if (currentSelectedSlot != null)
         {
@@ -157,7 +177,7 @@ public class InventoryUI : MonoBehaviour, IInventoryView
 
     public void ClearSelection()
     {
-        selectedItemData = null;
+        selectedItemId = null;
 
         if (currentSelectedSlot != null)
         {
@@ -202,14 +222,27 @@ public class InventoryUI : MonoBehaviour, IInventoryView
         }
     }
 
+    private void RequestClose()
+    {
+        ResolveInventoryToggle();
+        if (inventoryToggle != null && inventoryToggle.IsOpen())
+        {
+            inventoryToggle.CloseInventory();
+            return;
+        }
+
+        Hide();
+    }
+
     private void UseSelectedItem()
     {
-        if (selectedItemData == null || inventoryService == null)
+        InventoryItem selectedItem = FindSelectedItem();
+        if (selectedItem == null || inventoryService == null)
         {
             return;
         }
 
-        inventoryService.RemoveItem(selectedItemData, 1);
+        inventoryService.RemoveItem(selectedItem.itemId, 1, true);
     }
 
     private void DropSelectedItem()
@@ -220,7 +253,7 @@ public class InventoryUI : MonoBehaviour, IInventoryView
             return;
         }
 
-        inventoryService.RemoveItem(selectedItem.itemData, selectedItem.amount);
+        inventoryService.RemoveItem(selectedItem.itemId, selectedItem.amount, true);
     }
 
     private void ConfirmSelectedItemSelection()
@@ -236,45 +269,65 @@ public class InventoryUI : MonoBehaviour, IInventoryView
 
     private InventoryItem FindSelectedItem()
     {
-        if (inventoryService == null || selectedItemData == null)
+        if (inventoryService == null || string.IsNullOrWhiteSpace(selectedItemId))
         {
             return null;
         }
 
-        foreach (InventoryItem item in inventoryService.Items)
-        {
-            if (item != null && item.itemData == selectedItemData)
-            {
-                return item;
-            }
-        }
-
-        return null;
+        return inventoryService.FindItem(selectedItemId);
     }
 
     private void SyncSelectionDetails()
     {
         InventoryItem selectedItem = FindSelectedItem();
-        if (selectedItem == null || selectedItem.itemData == null)
+        if (selectedItem == null || string.IsNullOrWhiteSpace(selectedItem.itemId))
         {
             ClearSelection();
             return;
         }
 
+        ItemDataRuntime itemData = ItemDatabaseRuntime.FindById(selectedItem.itemId);
+        if (itemData == null)
+        {
+            if (itemIcon != null)
+            {
+                itemIcon.sprite = null;
+                itemIcon.enabled = false;
+            }
+
+            if (itemNameText != null)
+            {
+                itemNameText.text = selectedItem.itemId;
+            }
+
+            if (itemDescText != null)
+            {
+                itemDescText.text = "未找到对应 ItemDataRuntime 配置";
+            }
+
+            if (itemAmountText != null)
+            {
+                itemAmountText.text = "x" + selectedItem.amount;
+            }
+
+            return;
+        }
+
         if (itemIcon != null)
         {
-            itemIcon.sprite = selectedItem.itemData.icon;
-            itemIcon.enabled = selectedItem.itemData.icon != null;
+            Sprite icon = itemData.LoadIcon();
+            itemIcon.sprite = icon;
+            itemIcon.enabled = icon != null;
         }
 
         if (itemNameText != null)
         {
-            itemNameText.text = selectedItem.itemData.itemName;
+            itemNameText.text = itemData.itemName;
         }
 
         if (itemDescText != null)
         {
-            itemDescText.text = selectedItem.itemData.description;
+            itemDescText.text = itemData.description;
         }
 
         if (itemAmountText != null)
@@ -315,6 +368,14 @@ public class InventoryUI : MonoBehaviour, IInventoryView
         return false;
     }
 
+    private void ResolveInventoryToggle()
+    {
+        if (inventoryToggle == null)
+        {
+            inventoryToggle = FindObjectOfType<InventoryToggle>(true);
+        }
+    }
+
     private void SetVisible(bool visible)
     {
         if (panelRoot != null)
@@ -347,6 +408,11 @@ public class InventoryUI : MonoBehaviour, IInventoryView
         if (selectButton != null)
         {
             selectButton.onClick.RemoveListener(ConfirmSelectedItemSelection);
+        }
+
+        if (closeButton != null)
+        {
+            closeButton.onClick.RemoveListener(RequestClose);
         }
 
         if (inventoryService != null)

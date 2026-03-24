@@ -1,14 +1,20 @@
+using System;
+
 namespace Game.Inventory
 {
-    [System.Serializable]
+    [Serializable]
     public class InventoryItem
     {
-        public ItemData itemData;
+        public string itemId;
         public int amount;
 
-        public InventoryItem(ItemData itemData, int amount)
+        public InventoryItem()
         {
-            this.itemData = itemData;
+        }
+
+        public InventoryItem(string itemId, int amount)
+        {
+            this.itemId = itemId;
             this.amount = amount;
         }
     }

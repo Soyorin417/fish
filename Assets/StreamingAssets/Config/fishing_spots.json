@@ -1,0 +1,24 @@
+{
+  "spots": [
+    {
+      "spotId": "spot_beginner_coast",
+      "spotName": "\u8fd1\u5cb8\u65b0\u624b\u533a",
+      "recommendedRodLevel": 1,
+      "entries": [
+        { "fishId": "fish_001", "weight": 30 },
+        { "fishId": "fish_002", "weight": 24 },
+        { "fishId": "fish_003", "weight": 18 }
+      ]
+    },
+    {
+      "spotId": "spot_offshore_reef",
+      "spotName": "\u5916\u6d77\u7901\u533a",
+      "recommendedRodLevel": 2,
+      "entries": [
+        { "fishId": "fish_004", "weight": 20 },
+        { "fishId": "fish_005", "weight": 12 },
+        { "fishId": "fish_001", "weight": 8 }
+      ]
+    }
+  ]
+}

@@ -7,6 +7,8 @@ namespace StarterAssets
 {
 	public class StarterAssetsInputs : MonoBehaviour
 	{
+		private InventoryToggle inventoryToggle;
+
 		[Header("Character Input Values")]
 		public Vector2 move;
 		public Vector2 look;
@@ -68,12 +70,28 @@ namespace StarterAssets
 
 		private void OnApplicationFocus(bool hasFocus)
 		{
-			SetCursorState(cursorLocked);
+			if (!hasFocus)
+			{
+				return;
+			}
+
+			TryRefreshInventoryToggleState();
 		}
 
-		private void SetCursorState(bool newState)
+		private bool TryRefreshInventoryToggleState()
 		{
-			Cursor.lockState = newState ? CursorLockMode.Locked : CursorLockMode.None;
+			if (inventoryToggle == null)
+			{
+				inventoryToggle = FindObjectOfType<InventoryToggle>(true);
+			}
+
+			if (inventoryToggle == null)
+			{
+				return false;
+			}
+
+			inventoryToggle.RefreshState();
+			return true;
 		}
 	}
 	
