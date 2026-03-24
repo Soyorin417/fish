@@ -1,7 +1,6 @@
 using Game.Fishing.Core;
 using Game.Fishing.Data;
 using Game.Fishing.Spots;
-using Game.Inventory.Impl;
 using Game.Inventory.Interface;
 using Game.Player;
 using System.Collections;
@@ -463,9 +462,24 @@ public class PlayerFishing : MonoBehaviour, IFishingController
         }
 
         inventoryService = inventoryServiceSource as IInventoryService;
-        if (inventoryService == null && InventoryManager.Instance != null)
+        if (inventoryService == null && inventoryServiceSource != null)
         {
-            inventoryService = InventoryManager.Instance;
+            Debug.LogError("inventoryServiceSource does not implement IInventoryService.");
+        }
+
+        if (inventoryService != null)
+        {
+            return;
+        }
+
+        foreach (MonoBehaviour behaviour in FindObjectsOfType<MonoBehaviour>(true))
+        {
+            if (behaviour is IInventoryService service)
+            {
+                inventoryServiceSource = behaviour;
+                inventoryService = service;
+                return;
+            }
         }
     }
 

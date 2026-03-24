@@ -1,26 +1,29 @@
+锘縰sing System;
+using Game.Inventory;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Game.Inventory.Impl;
 
 public class InventorySlotUI : MonoBehaviour
 {
     [Header("UI")]
-    public Image icon;              // 绑定 ItemIcon
-    public TMP_Text amountText;     // 绑定 Amount
-    public GameObject highlight;    // 绑定 Highlight
+    public Image icon;
+    public TMP_Text amountText;
+    public GameObject highlight;
 
     private InventoryItem currentItem;
-    private InventoryUI inventoryUI;
+    private Action<InventorySlotUI, InventoryItem> onSelected;
 
-    public void SetData(InventoryItem item, InventoryUI ui)
+    public InventoryItem CurrentItem => currentItem;
+
+    public void SetData(InventoryItem item, Action<InventorySlotUI, InventoryItem> onSelectedCallback)
     {
         currentItem = item;
-        inventoryUI = ui;
+        onSelected = onSelectedCallback;
 
         if (item == null || item.itemData == null)
         {
-            Debug.Log("SetData: item 为空");
+            Debug.Log("SetData: item is null");
 
             if (icon != null)
             {
@@ -29,14 +32,16 @@ public class InventorySlotUI : MonoBehaviour
             }
 
             if (amountText != null)
-                amountText.text = "";
+            {
+                amountText.text = string.Empty;
+            }
 
             SetSelected(false);
             return;
         }
 
-        Debug.Log("SetData物品: " + item.itemData.itemName);
-        Debug.Log("SetData图标是否为空: " + (item.itemData.icon == null));
+        Debug.Log("SetData item: " + item.itemData.itemName);
+        Debug.Log("SetData icon missing: " + (item.itemData.icon == null));
 
         if (icon != null)
         {
@@ -45,7 +50,9 @@ public class InventorySlotUI : MonoBehaviour
         }
 
         if (amountText != null)
-            amountText.text = item.amount > 1 ? "x" + item.amount : "";
+        {
+            amountText.text = item.amount > 1 ? "x" + item.amount : string.Empty;
+        }
 
         SetSelected(false);
     }
@@ -55,12 +62,11 @@ public class InventorySlotUI : MonoBehaviour
         Debug.Log("click success");
 
         if (currentItem == null || currentItem.itemData == null)
-            return;
-
-        if (inventoryUI != null)
         {
-            inventoryUI.SelectItem(this, currentItem);
+            return;
         }
+
+        onSelected?.Invoke(this, currentItem);
     }
 
     public void SetSelected(bool selected)
@@ -71,3 +77,4 @@ public class InventorySlotUI : MonoBehaviour
         }
     }
 }
+

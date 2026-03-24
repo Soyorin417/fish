@@ -1,19 +1,26 @@
+using Game.Player;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 
 public class InventoryToggle : MonoBehaviour
 {
     public GameObject inventoryUI;
-    public PlayerControlAdapter playerControl;
 
-    private bool isOpen = false;
+    [FormerlySerializedAs("playerControl")]
+    [SerializeField] private MonoBehaviour playerControlSource;
 
-    void Start()
+    private IPlayerControl playerControl;
+    private bool isOpen;
+
+    private void Start()
     {
+        ResolvePlayerControl();
+
         if (inventoryUI != null)
         {
             inventoryUI.SetActive(false);
-            Debug.Log("Start 时关闭背包：" + inventoryUI.name);
+            Debug.Log("Start close inventory: " + inventoryUI.name);
         }
 
         isOpen = false;
@@ -23,7 +30,7 @@ public class InventoryToggle : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
     }
 
-    void Update()
+    private void Update()
     {
         if (Input.GetKeyDown(KeyCode.B))
         {
@@ -39,7 +46,10 @@ public class InventoryToggle : MonoBehaviour
 
     public void OpenInventory()
     {
-        if (isOpen) return;
+        if (isOpen)
+        {
+            return;
+        }
 
         isOpen = true;
         ApplyState();
@@ -47,10 +57,18 @@ public class InventoryToggle : MonoBehaviour
 
     public void CloseInventory()
     {
-        if (!isOpen) return;
+        if (!isOpen)
+        {
+            return;
+        }
 
         isOpen = false;
         ApplyState();
+    }
+
+    public bool IsOpen()
+    {
+        return isOpen;
     }
 
     private void ApplyState()
@@ -75,11 +93,37 @@ public class InventoryToggle : MonoBehaviour
             playerControl.SetJumpEnabled(!isOpen);
         }
 
-        Debug.Log("背包状态: " + (isOpen ? "打开" : "关闭"));
+        Debug.Log("Inventory state: " + (isOpen ? "open" : "closed"));
     }
 
-    public bool IsOpen()
+    private bool ResolvePlayerControl()
     {
-        return isOpen;
+        if (playerControl != null)
+        {
+            return true;
+        }
+
+        playerControl = playerControlSource as IPlayerControl;
+        if (playerControl == null && playerControlSource != null)
+        {
+            Debug.LogError("playerControlSource does not implement IPlayerControl.");
+        }
+
+        if (playerControl != null)
+        {
+            return true;
+        }
+
+        foreach (MonoBehaviour behaviour in FindObjectsOfType<MonoBehaviour>(true))
+        {
+            if (behaviour is IPlayerControl control)
+            {
+                playerControlSource = behaviour;
+                playerControl = control;
+                return true;
+            }
+        }
+
+        return false;
     }
 }

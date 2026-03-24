@@ -1,4 +1,4 @@
-using UnityEngine;
+锘縰sing UnityEngine;
 using Game.Inventory;
 
 namespace Game.Fishing.Data
@@ -14,10 +14,15 @@ namespace Game.Fishing.Data
 
         public int rarity = 1;
 
-        [Header("掉落权重")]
+        [Header("鍚堟垚閰嶇疆")]
+        public bool canSynthesize = true;
+        public string synthGroupId;
+        public int synthTier = 1;
+
+        [Header("鎺夎惤鏉冮噸")]
         public float weight = 1f;
 
-        [Header("体型范围")]
+        [Header("浣撳瀷鑼冨洿")]
         public float sizeMin = 0.8f;
         public float sizeMax = 1.2f;
     }

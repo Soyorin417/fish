@@ -1,14 +1,15 @@
-using Game.Inventory;
-
-[System.Serializable]
-public class InventoryItem
+namespace Game.Inventory
 {
-    public ItemData itemData;
-    public int amount;
-
-    public InventoryItem(ItemData itemData, int amount)
+    [System.Serializable]
+    public class InventoryItem
     {
-        this.itemData = itemData;
-        this.amount = amount;
+        public ItemData itemData;
+        public int amount;
+
+        public InventoryItem(ItemData itemData, int amount)
+        {
+            this.itemData = itemData;
+            this.amount = amount;
+        }
     }
 }

@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using Game.Inventory.Impl;
+using Game.Inventory;
 
 namespace Game.Inventory.Interface
 {
@@ -11,9 +11,13 @@ namespace Game.Inventory.Interface
 
         event Action OnInventoryChanged;
 
+        IReadOnlyList<InventoryItem> GetItems();
+        InventoryItem FindItem(ItemData itemData);
+        void ClearInventory();
         bool AddItem(ItemData itemData, int amount = 1);
         bool RemoveItem(ItemData itemData, int amount = 1);
         int GetItemCount(ItemData itemData);
         bool HasSpace(ItemData itemData, int amount = 1);
     }
 }
+

@@ -1,14 +1,21 @@
-using Game.Inventory;
-using Game.Inventory.Impl;
 using System.Collections.Generic;
 using System.IO;
+using Game.Inventory;
+using Game.Inventory.Interface;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class InventoryJsonLoader : MonoBehaviour
 {
     public static InventoryJsonLoader Instance { get; private set; }
 
+    [FormerlySerializedAs("inventoryManagerSource")]
+    [SerializeField] private MonoBehaviour inventoryServiceSource;
+
     public List<ItemData> itemDatabase = new List<ItemData>();
+
+    private IInventoryService inventoryService;
+    private bool suppressAutoSave;
 
     private string JsonPath =>
         Path.Combine(Application.streamingAssetsPath, "Config/Inventory.json");
@@ -20,20 +27,40 @@ public class InventoryJsonLoader : MonoBehaviour
 
     private void Start()
     {
+        if (!ResolveInventoryService())
+        {
+            Debug.LogError("InventoryJsonLoader could not resolve an IInventoryService.");
+            return;
+        }
+
+        inventoryService.OnInventoryChanged += HandleInventoryChanged;
         Load();
+    }
+
+    private void OnDestroy()
+    {
+        if (inventoryService != null)
+        {
+            inventoryService.OnInventoryChanged -= HandleInventoryChanged;
+        }
+
+        if (Instance == this)
+        {
+            Instance = null;
+        }
     }
 
     public void Load()
     {
-        if (InventoryManager.Instance == null)
+        if (!ResolveInventoryService())
         {
-            Debug.LogError("InventoryManager.Instance 为空，无法加载背包");
+            Debug.LogError("No inventory service available for loading.");
             return;
         }
 
         if (!File.Exists(JsonPath))
         {
-            Debug.LogWarning("背包JSON不存在，将创建空背包: " + JsonPath);
+            Debug.LogWarning("Inventory JSON not found, creating an empty inventory: " + JsonPath);
             Save();
             return;
         }
@@ -43,47 +70,57 @@ public class InventoryJsonLoader : MonoBehaviour
 
         if (root == null || root.items == null)
         {
-            Debug.LogError("JSON解析失败");
+            Debug.LogError("Inventory JSON parse failed.");
             return;
         }
 
-        InventoryManager.Instance.ClearInventory();
+        suppressAutoSave = true;
 
-        foreach (var item in root.items)
+        try
         {
-            ItemData data = FindItem(item.itemId);
+            inventoryService.ClearInventory();
 
-            if (data == null)
+            foreach (InventoryItemJson item in root.items)
             {
-                Debug.LogWarning("找不到物品: " + item.itemId);
-                continue;
-            }
+                ItemData data = FindItem(item.itemId);
 
-            InventoryManager.Instance.AddItem(data, item.amount);
+                if (data == null)
+                {
+                    Debug.LogWarning("Item not found in database: " + item.itemId);
+                    continue;
+                }
+
+                inventoryService.AddItem(data, item.amount);
+            }
+        }
+        finally
+        {
+            suppressAutoSave = false;
         }
 
-        Debug.Log("背包JSON加载完成");
+        Debug.Log("Inventory JSON loaded.");
     }
 
     public void Save()
     {
-        Debug.Log("Save 被调用");
-        if (InventoryManager.Instance == null)
+        if (!ResolveInventoryService())
         {
-            Debug.LogError("InventoryManager.Instance 为空，无法保存背包");
+            Debug.LogError("No inventory service available for saving.");
             return;
         }
 
         InventoryJsonRoot root = new InventoryJsonRoot();
 
-        foreach (var invItem in InventoryManager.Instance.Items)
+        foreach (InventoryItem invItem in inventoryService.Items)
         {
             if (invItem == null || invItem.itemData == null)
+            {
                 continue;
+            }
 
             if (string.IsNullOrEmpty(invItem.itemData.itemId))
             {
-                Debug.LogWarning("存在 itemId 为空的物品，跳过保存: " + invItem.itemData.name);
+                Debug.LogWarning("Skipping item with empty itemId: " + invItem.itemData.name);
                 continue;
             }
 
@@ -94,27 +131,69 @@ public class InventoryJsonLoader : MonoBehaviour
             });
         }
 
-        string path = Path.Combine(Application.streamingAssetsPath, "Config/Inventory.json");
-        string dir = Path.GetDirectoryName(path);
-
+        string dir = Path.GetDirectoryName(JsonPath);
         if (!Directory.Exists(dir))
         {
             Directory.CreateDirectory(dir);
         }
 
         string json = JsonUtility.ToJson(root, true);
-        File.WriteAllText(path, json);
+        File.WriteAllText(JsonPath, json);
 
-        Debug.Log("背包JSON保存完成: " + path);
+        Debug.Log("Inventory JSON saved: " + JsonPath);
+    }
+
+    private void HandleInventoryChanged()
+    {
+        if (suppressAutoSave)
+        {
+            return;
+        }
+
+        Save();
     }
 
     private ItemData FindItem(string id)
     {
-        foreach (var item in itemDatabase)
+        foreach (ItemData item in itemDatabase)
         {
             if (item != null && item.itemId == id)
+            {
                 return item;
+            }
         }
+
         return null;
+    }
+
+    private bool ResolveInventoryService()
+    {
+        if (inventoryService != null)
+        {
+            return true;
+        }
+
+        inventoryService = inventoryServiceSource as IInventoryService;
+        if (inventoryService == null && inventoryServiceSource != null)
+        {
+            Debug.LogError("inventoryServiceSource does not implement IInventoryService.");
+        }
+
+        if (inventoryService != null)
+        {
+            return true;
+        }
+
+        foreach (MonoBehaviour behaviour in FindObjectsOfType<MonoBehaviour>(true))
+        {
+            if (behaviour is IInventoryService service)
+            {
+                inventoryServiceSource = behaviour;
+                inventoryService = service;
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -1,12 +1,16 @@
 {
     "items": [
         {
-            "itemId": "fish_001",
-            "amount": 9
+            "itemId": "fish_003",
+            "amount": 3
         },
         {
             "itemId": "fish_002",
-            "amount": 3
+            "amount": 2
+        },
+        {
+            "itemId": "fish_001",
+            "amount": 1
         }
     ]
 }

@@ -1,6 +1,5 @@
 using Game.Fishing.Data;
 using Game.Inventory;
-using Game.Inventory.Impl;
 using Game.Inventory.Interface;
 using System.Collections;
 using TMPro;
@@ -233,9 +232,24 @@ namespace Game.Fishing.Core
             }
 
             inventoryService = inventoryServiceSource as IInventoryService;
-            if (inventoryService == null && InventoryManager.Instance != null)
+            if (inventoryService == null && inventoryServiceSource != null)
             {
-                inventoryService = InventoryManager.Instance;
+                Debug.LogError("inventoryServiceSource does not implement IInventoryService.");
+            }
+
+            if (inventoryService != null)
+            {
+                return;
+            }
+
+            foreach (MonoBehaviour behaviour in FindObjectsOfType<MonoBehaviour>(true))
+            {
+                if (behaviour is IInventoryService service)
+                {
+                    inventoryServiceSource = behaviour;
+                    inventoryService = service;
+                    return;
+                }
             }
         }
 
