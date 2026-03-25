@@ -1,4 +1,3 @@
-using Game.Inventory;
 using Game.Synthesis.Data;
 
 namespace Game.Synthesis.Core
@@ -8,37 +7,49 @@ namespace Game.Synthesis.Core
     {
         public bool success;
         public string message;
-        public InventoryItem inputA;
-        public InventoryItem inputB;
-        public ItemDataRuntime outputItemDataRuntime;
-        public int outputAmount;
-        public SynthesisRecipeData recipe;
+        public string failureReason;
+        public string material1Id;
+        public string material2Id;
+        public string resultFishId;
+        public string recipeId;
+        public string routeId;
 
-        public static SynthesisResult CreateFailure(string message, InventoryItem inputA, InventoryItem inputB, SynthesisRecipeData recipe = null)
+        public static SynthesisResult CreateFailure(
+            string failureReason,
+            string material1Id,
+            string material2Id,
+            SynthesisRecipeData recipe = null)
         {
             return new SynthesisResult
             {
                 success = false,
-                message = message,
-                inputA = inputA,
-                inputB = inputB,
-                outputItemDataRuntime = recipe != null ? recipe.outputItem : null,
-                outputAmount = 0,
-                recipe = recipe
+                message = failureReason,
+                failureReason = failureReason,
+                material1Id = material1Id,
+                material2Id = material2Id,
+                resultFishId = recipe != null ? recipe.resultFishId : null,
+                recipeId = recipe != null ? recipe.recipeId : null,
+                routeId = recipe != null ? recipe.routeId : null
             };
         }
 
-        public static SynthesisResult CreateSuccess(string message, InventoryItem inputA, InventoryItem inputB, SynthesisRecipeData recipe, int outputAmount)
+        public static SynthesisResult CreateSuccess(
+            string material1Id,
+            string material2Id,
+            SynthesisRecipeData recipe)
         {
+            string resultFishId = recipe != null ? recipe.resultFishId : null;
+
             return new SynthesisResult
             {
                 success = true,
-                message = message,
-                inputA = inputA,
-                inputB = inputB,
-                outputItemDataRuntime = recipe != null ? recipe.outputItem : null,
-                outputAmount = outputAmount,
-                recipe = recipe
+                message = "Synthesis succeeded: " + resultFishId,
+                failureReason = string.Empty,
+                material1Id = material1Id,
+                material2Id = material2Id,
+                resultFishId = resultFishId,
+                recipeId = recipe != null ? recipe.recipeId : null,
+                routeId = recipe != null ? recipe.routeId : null
             };
         }
     }

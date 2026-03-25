@@ -25,17 +25,17 @@
   },
   {
     "id": "fish_004",
-    "name": "鲢鱼",
+    "name": "水母",
     "icon": "Icons/fish_004",
-    "description": "群游鱼代表",
+    "description": "",
     "stackable": true,
     "maxStack": 99
   },
   {
     "id": "fish_005",
-    "name": "鳙鱼",
+    "name": "龙虾",
     "icon": "Icons/fish_005",
-    "description": "中后期收益鱼",
+    "description": "",
     "stackable": true,
     "maxStack": 99
   },
@@ -65,17 +65,17 @@
   },
   {
     "id": "fish_009",
-    "name": "鳜鱼",
+    "name": "章鱼",
     "icon": "Icons/fish_009",
-    "description": "高难捕食者",
+    "description": "",
     "stackable": true,
     "maxStack": 99
   },
   {
     "id": "fish_010",
-    "name": "青鱼",
+    "name": "旗鱼",
     "icon": "Icons/fish_010",
-    "description": "巨物线代表",
+    "description": "",
     "stackable": true,
     "maxStack": 99
   },
@@ -97,9 +97,9 @@
   },
   {
     "id": "fish_013",
-    "name": "罗非鱼",
+    "name": "海马",
     "icon": "Icons/fish_013",
-    "description": "稳定出货",
+    "description": "",
     "stackable": true,
     "maxStack": 99
   },
@@ -172,6 +172,30 @@
     "name": "东星斑",
     "icon": "Icons/fish_022",
     "description": "高价值掠食鱼",
+    "stackable": true,
+    "maxStack": 99
+  },
+  {
+    "id": "fish_023",
+    "name": "鲑鱼",
+    "icon": "Icons/fish_023",
+    "description": "",
+    "stackable": true,
+    "maxStack": 99
+  },
+  {
+    "id": "fish_024",
+    "name": "狮子鱼",
+    "icon": "Icons/fish_024",
+    "description": "",
+    "stackable": true,
+    "maxStack": 99
+  },
+  {
+    "id": "fish_025",
+    "name": "神秘鱼",
+    "icon": "Icons/fish_025",
+    "description": "",
     "stackable": true,
     "maxStack": 99
   }

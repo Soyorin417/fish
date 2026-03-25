@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Game.Gacha;
 using Game.Inventory;
 using Game.Inventory.Interface;
 using TMPro;
@@ -30,6 +31,12 @@ public class InventoryUI : MonoBehaviour, IInventoryView
     public Button dropButton;
     public Button selectButton;
 
+    [Header("Gacha")]
+    public string gachaTicketItemId = "fish_025";
+    public GameObject gachaPanelRoot;
+    public GachaRollController gachaRollController;
+    public bool closeInventoryWhenOpenGacha = true;
+
     private readonly List<InventorySlotUI> slotUIs = new List<InventorySlotUI>();
     private IInventoryService inventoryService;
     private InventoryToggle inventoryToggle;
@@ -43,6 +50,13 @@ public class InventoryUI : MonoBehaviour, IInventoryView
     {
         ResolveInventoryService();
         ResolveInventoryToggle();
+        ResolveGachaController();
+
+        if (gachaRollController != null)
+        {
+            gachaRollController.onRollCompleted -= HandleGachaRollCompleted;
+            gachaRollController.onRollCompleted += HandleGachaRollCompleted;
+        }
 
         if (useButton != null)
         {
@@ -136,11 +150,19 @@ public class InventoryUI : MonoBehaviour, IInventoryView
             currentSelectedSlot.SetSelected(true);
         }
 
+        Debug.Log(
+            "InventoryUI.RefreshUI entryCount=" + inventoryService.Items.Count +
+            " callbackAssigned=" + (selectionCallback != null));
+
         SyncSelectionDetails();
     }
 
     public void SelectItem(InventorySlotUI slot, ItemDataRuntime itemData)
     {
+        Debug.Log(
+            "InventoryUI.SelectItem(ItemDataRuntime) slot=" + (slot != null ? slot.name : "(null)") +
+            " itemId=" + (itemData != null ? itemData.itemId : "(null)"));
+
         if (itemData == null)
         {
             SelectItem(slot, (InventoryItem)null);
@@ -158,6 +180,11 @@ public class InventoryUI : MonoBehaviour, IInventoryView
 
     public void SelectItem(InventorySlotUI slot, InventoryItem item)
     {
+        Debug.Log(
+            "InventoryUI.SelectItem(InventoryItem) slot=" + (slot != null ? slot.name : "(null)") +
+            " itemId=" + (item != null ? item.itemId : "(null)") +
+            " callbackAssigned=" + (selectionCallback != null));
+
         if (currentSelectedSlot != null && currentSelectedSlot != slot)
         {
             currentSelectedSlot.SetSelected(false);
@@ -172,7 +199,14 @@ public class InventoryUI : MonoBehaviour, IInventoryView
         }
 
         SyncSelectionDetails();
-        selectionCallback?.Invoke(item);
+
+        if (selectionCallback == null)
+        {
+            Debug.LogWarning("InventoryUI.SelectItem has no external selectionCallback to notify.");
+            return;
+        }
+
+        selectionCallback.Invoke(item);
     }
 
     public void ClearSelection()
@@ -191,11 +225,13 @@ public class InventoryUI : MonoBehaviour, IInventoryView
     public void SetSelectionCallback(Action<InventoryItem> callback)
     {
         selectionCallback = callback;
+        Debug.Log("InventoryUI.SetSelectionCallback assigned=" + (callback != null));
     }
 
     public void ClearSelectionCallback()
     {
         selectionCallback = null;
+        Debug.Log("InventoryUI.ClearSelectionCallback");
     }
 
     private void ClearSelectionDetails()
@@ -239,10 +275,74 @@ public class InventoryUI : MonoBehaviour, IInventoryView
         InventoryItem selectedItem = FindSelectedItem();
         if (selectedItem == null || inventoryService == null)
         {
+            Debug.LogWarning("InventoryUI.UseSelectedItem ignored because no item is selected.");
             return;
         }
 
-        inventoryService.RemoveItem(selectedItem.itemId, 1, true);
+        if (selectedItem.itemId == gachaTicketItemId)
+        {
+            TryUseGachaTicket(selectedItem);
+            return;
+        }
+
+        inventoryService.RemoveItem(selectedItem.itemId, 1, ResolveStackable(selectedItem.itemId));
+        Debug.Log("InventoryUI.UseSelectedItem consumed regular item itemId=" + selectedItem.itemId);
+    }
+
+    private void TryUseGachaTicket(InventoryItem selectedItem)
+    {
+        if (selectedItem == null || string.IsNullOrWhiteSpace(selectedItem.itemId))
+        {
+            Debug.LogWarning("InventoryUI.TryUseGachaTicket received an invalid selected item.");
+            return;
+        }
+
+        if (selectedItem.amount <= 0 || inventoryService.GetItemCount(selectedItem.itemId) <= 0)
+        {
+            Debug.LogWarning("InventoryUI.TryUseGachaTicket found no ticket left for itemId=" + selectedItem.itemId);
+            return;
+        }
+
+        ResolveGachaController();
+        if (gachaRollController == null)
+        {
+            Debug.LogWarning("InventoryUI.TryUseGachaTicket aborted because gachaRollController is not assigned.");
+            return;
+        }
+
+        GameObject panelToOpen = ResolveGachaPanelRoot();
+        if (panelToOpen == null)
+        {
+            Debug.LogWarning("InventoryUI.TryUseGachaTicket could not find a GachaPanel root to open.");
+            return;
+        }
+
+        bool removed = inventoryService.RemoveItem(selectedItem.itemId, 1, ResolveStackable(selectedItem.itemId));
+        if (!removed)
+        {
+            Debug.LogWarning("InventoryUI.TryUseGachaTicket failed to consume ticket itemId=" + selectedItem.itemId);
+            return;
+        }
+
+        Debug.Log("InventoryUI.TryUseGachaTicket consumed ticket itemId=" + selectedItem.itemId + " x1");
+
+        if (closeInventoryWhenOpenGacha)
+        {
+            RequestClose();
+        }
+        else
+        {
+            Hide();
+        }
+
+        panelToOpen.SetActive(true);
+
+        bool started = gachaRollController.PlayRandomRoll();
+        if (!started)
+        {
+            inventoryService.AddItem(selectedItem.itemId, 1, ResolveStackable(selectedItem.itemId));
+            Debug.LogWarning("InventoryUI.TryUseGachaTicket refunded ticket because gacha roll failed to start.");
+        }
     }
 
     private void DropSelectedItem()
@@ -253,7 +353,7 @@ public class InventoryUI : MonoBehaviour, IInventoryView
             return;
         }
 
-        inventoryService.RemoveItem(selectedItem.itemId, selectedItem.amount, true);
+        inventoryService.RemoveItem(selectedItem.itemId, selectedItem.amount, ResolveStackable(selectedItem.itemId));
     }
 
     private void ConfirmSelectedItemSelection()
@@ -261,10 +361,32 @@ public class InventoryUI : MonoBehaviour, IInventoryView
         InventoryItem selectedItem = FindSelectedItem();
         if (selectedItem == null)
         {
+            Debug.LogWarning("InventoryUI.ConfirmSelectedItemSelection has no selected item.");
             return;
         }
 
+        Debug.Log(
+            "InventoryUI.ConfirmSelectedItemSelection itemId=" + selectedItem.itemId +
+            " callbackAssigned=" + (selectionCallback != null));
+
         selectionCallback?.Invoke(selectedItem);
+    }
+
+    private void HandleGachaRollCompleted(string resultFishId)
+    {
+        if (inventoryService == null) return;
+        if (string.IsNullOrWhiteSpace(resultFishId)) return;
+        if (resultFishId == gachaTicketItemId) return;
+
+        bool added = inventoryService.AddItem(resultFishId, 1, ResolveStackable(resultFishId));
+        if (!added)
+        {
+            Debug.LogWarning("Failed to add gacha reward: " + resultFishId);
+            return;
+        }
+
+        Debug.Log("Added gacha reward: " + resultFishId);
+        RefreshUI();
     }
 
     private InventoryItem FindSelectedItem()
@@ -376,6 +498,35 @@ public class InventoryUI : MonoBehaviour, IInventoryView
         }
     }
 
+    private void ResolveGachaController()
+    {
+        if (gachaRollController == null)
+        {
+            gachaRollController = FindObjectOfType<GachaRollController>(true);
+        }
+    }
+
+    private GameObject ResolveGachaPanelRoot()
+    {
+        if (gachaPanelRoot != null)
+        {
+            return gachaPanelRoot;
+        }
+
+        if (gachaRollController != null)
+        {
+            gachaPanelRoot = gachaRollController.gameObject;
+        }
+
+        return gachaPanelRoot;
+    }
+
+    private static bool ResolveStackable(string itemId)
+    {
+        ItemDataRuntime itemData = ItemDatabaseRuntime.FindById(itemId);
+        return itemData == null || itemData.stackable;
+    }
+
     private void SetVisible(bool visible)
     {
         if (panelRoot != null)
@@ -395,6 +546,11 @@ public class InventoryUI : MonoBehaviour, IInventoryView
 
     private void OnDestroy()
     {
+        if (gachaRollController != null)
+        {
+            gachaRollController.onRollCompleted -= HandleGachaRollCompleted;
+        }
+
         if (useButton != null)
         {
             useButton.onClick.RemoveListener(UseSelectedItem);

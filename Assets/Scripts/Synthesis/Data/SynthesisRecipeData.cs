@@ -1,20 +1,23 @@
-using Game.Fishing.Data;
-using Game.Inventory;
-using UnityEngine;
+using System;
 
 namespace Game.Synthesis.Data
 {
-    [CreateAssetMenu(fileName = "SynthesisRecipe", menuName = "Game/Synthesis/Recipe")]
-    public class SynthesisRecipeData : ScriptableObject
+    [Serializable]
+    public class SynthesisRecipeData
     {
         public string recipeId;
-        public string recipeName;
-        public FishData inputFishA;
-        public FishData inputFishB;
-        public ItemDataRuntime outputItem;
-        public bool orderInsensitive = true;
+        public string routeId;
+        public string material1Id;
+        public string material2Id;
+        public string resultFishId;
+        public bool isSymmetric = true;
 
-        [TextArea]
-        public string description;
+        public bool IsValid()
+        {
+            return !string.IsNullOrWhiteSpace(recipeId) &&
+                   !string.IsNullOrWhiteSpace(material1Id) &&
+                   !string.IsNullOrWhiteSpace(material2Id) &&
+                   !string.IsNullOrWhiteSpace(resultFishId);
+        }
     }
 }

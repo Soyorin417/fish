@@ -2,9 +2,10 @@ using System;
 using Game.Inventory;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class InventorySlotUI : MonoBehaviour
+public class InventorySlotUI : MonoBehaviour, IPointerClickHandler
 {
     [Header("UI")]
     public Image icon;
@@ -13,13 +14,42 @@ public class InventorySlotUI : MonoBehaviour
 
     private InventoryItem currentItem;
     private Action<InventorySlotUI, InventoryItem> onSelected;
+    private Button cachedButton;
 
     public InventoryItem CurrentItem => currentItem;
+
+    private void Awake()
+    {
+        cachedButton = GetComponent<Button>();
+        if (cachedButton != null)
+        {
+            cachedButton.onClick.RemoveListener(OnClick);
+            cachedButton.onClick.AddListener(OnClick);
+        }
+        else
+        {
+            Debug.LogWarning("InventorySlotUI has no Button component on " + name + ". Falling back to IPointerClickHandler only.");
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (cachedButton != null)
+        {
+            cachedButton.onClick.RemoveListener(OnClick);
+        }
+    }
 
     public void SetData(InventoryItem item, Action<InventorySlotUI, InventoryItem> onSelectedCallback)
     {
         currentItem = item;
         onSelected = onSelectedCallback;
+
+        Debug.Log(
+            "InventorySlotUI.SetData slot=" + name +
+            " itemId=" + (item != null ? item.itemId : "(null)") +
+            " amount=" + (item != null ? item.amount : 0) +
+            " callbackAssigned=" + (onSelectedCallback != null));
 
         if (item == null || string.IsNullOrWhiteSpace(item.itemId))
         {
@@ -42,7 +72,7 @@ public class InventorySlotUI : MonoBehaviour
 
         if (itemData == null)
         {
-            Debug.LogWarning("SetData item config missing: " + item.itemId);
+            Debug.LogWarning("InventorySlotUI.SetData item config missing: " + item.itemId);
 
             if (icon != null)
             {
@@ -74,14 +104,42 @@ public class InventorySlotUI : MonoBehaviour
         SetSelected(false);
     }
 
-    public void OnClick()
+    public void OnPointerClick(PointerEventData eventData)
     {
-        if (currentItem == null || string.IsNullOrWhiteSpace(currentItem.itemId))
+        if (cachedButton != null)
         {
+            Debug.Log(
+                "InventorySlotUI.OnPointerClick ignored because Button.onClick will handle slot=" + name +
+                " itemId=" + (currentItem != null ? currentItem.itemId : "(null)"));
             return;
         }
 
-        onSelected?.Invoke(this, currentItem);
+        Debug.Log(
+            "InventorySlotUI.OnPointerClick slot=" + name +
+            " itemId=" + (currentItem != null ? currentItem.itemId : "(null)"));
+        OnClick();
+    }
+
+    public void OnClick()
+    {
+        Debug.Log(
+            "InventorySlotUI.OnClick slot=" + name +
+            " itemId=" + (currentItem != null ? currentItem.itemId : "(null)") +
+            " hasSelectionHandler=" + (onSelected != null));
+
+        if (currentItem == null || string.IsNullOrWhiteSpace(currentItem.itemId))
+        {
+            Debug.LogWarning("InventorySlotUI.OnClick ignored because currentItem is empty on slot=" + name);
+            return;
+        }
+
+        if (onSelected == null)
+        {
+            Debug.LogWarning("InventorySlotUI.OnClick has no onSelected callback for slot=" + name);
+            return;
+        }
+
+        onSelected.Invoke(this, currentItem);
     }
 
     public void SetSelected(bool selected)

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Game.Fishing.Data;
 using Game.Inventory;
 using Game.Inventory.Interface;
 using Game.Synthesis.Data;
@@ -11,187 +10,180 @@ namespace Game.Synthesis.Core
 {
     public class SynthesisManager : MonoBehaviour, ISynthesisService
     {
+        private const string FallbackRecipeId = "fallback_recipe";
+        private const string FallbackRouteId = "fallback_route";
+
         [Header("Data")]
         [SerializeField] private SynthesisRecipeDatabase recipeDatabase;
-        [SerializeField] private FishDataDatabase fishDatabase;
 
         [Header("Services")]
         [SerializeField] private MonoBehaviour inventoryServiceProvider;
+
+        [Header("Fallback")]
+        [SerializeField] private string defaultResultFishId = "fish_025";
 
         private IInventoryService inventoryService;
 
         public event Action<SynthesisResult> OnSynthesisFinished;
 
-        /// <summary>
-        /// 初始化时解析并缓存背包服务，供后续合成流程使用。
-        /// </summary>
         private void Awake()
         {
             ResolveInventoryService();
+            ResolveRecipeDatabase();
         }
 
-        /// <summary>
-        /// 判断当前选中的两个物品是否满足合成条件。
-        /// </summary>
-        public bool CanSynthesize(InventoryItem itemA, InventoryItem itemB)
+        public bool CanSynthesize(string fishId1, string fishId2)
         {
-            if (!ResolveInventoryService())
+            if (!ResolveInventoryService() || !ResolveRecipeDatabase())
             {
                 return false;
             }
 
-            if (!TryResolveRecipe(itemA, itemB, out SynthesisRecipeData recipe, out _))
+            if (!TryResolveRecipe(fishId1, fishId2, out SynthesisRecipeData recipe, out _))
             {
                 return false;
             }
 
-            return HasEnoughMaterials(itemA, itemB) && recipe != null;
+            return recipe != null && HasEnoughMaterials(fishId1, fishId2);
         }
 
-        /// <summary>
-        /// 获取两个输入物品所匹配到的合成配方。
-        /// </summary>
-        public SynthesisRecipeData GetMatchedRecipe(InventoryItem itemA, InventoryItem itemB)
-        {
-            return TryResolveRecipe(itemA, itemB, out SynthesisRecipeData recipe, out _) ? recipe : null;
-        }
-
-        /// <summary>
-        /// 执行合成流程：校验配方、扣除材料、发放产物，并返回合成结果。
-        /// </summary>
-        public SynthesisResult TrySynthesize(InventoryItem itemA, InventoryItem itemB)
+        public SynthesisResult TrySynthesize(string fishId1, string fishId2)
         {
             if (!ResolveInventoryService())
             {
-                return Finish(SynthesisResult.CreateFailure("No inventory service found.", itemA, itemB));
+                return Finish(SynthesisResult.CreateFailure("No inventory service found.", fishId1, fishId2));
             }
 
-            if (recipeDatabase == null)
+            if (!ResolveRecipeDatabase())
             {
-                return Finish(SynthesisResult.CreateFailure("No synthesis recipe database assigned.", itemA, itemB));
+                return Finish(SynthesisResult.CreateFailure("No synthesis recipe database available.", fishId1, fishId2));
             }
 
-            if (fishDatabase == null)
+            if (!TryResolveRecipe(fishId1, fishId2, out SynthesisRecipeData recipe, out string failureReason))
             {
-                return Finish(SynthesisResult.CreateFailure("No fish database assigned.", itemA, itemB));
+                return Finish(SynthesisResult.CreateFailure(failureReason, fishId1, fishId2, recipe));
             }
 
-            if (!TryResolveRecipe(itemA, itemB, out SynthesisRecipeData recipe, out string resolveMessage))
+            if (!HasEnoughMaterials(fishId1, fishId2))
             {
-                return Finish(SynthesisResult.CreateFailure(resolveMessage, itemA, itemB));
+                return Finish(SynthesisResult.CreateFailure("Not enough synthesis materials in inventory.", fishId1, fishId2, recipe));
             }
 
-            if (!HasEnoughMaterials(itemA, itemB))
-            {
-                return Finish(SynthesisResult.CreateFailure("Not enough materials in inventory.", itemA, itemB, recipe));
-            }
-
-            Dictionary<string, int> removalPlan = BuildRemovalPlan(itemA, itemB);
+            Dictionary<string, int> removalPlan = BuildRemovalPlan(fishId1, fishId2);
             List<KeyValuePair<string, int>> removedEntries = new List<KeyValuePair<string, int>>();
 
             foreach (KeyValuePair<string, int> entry in removalPlan)
             {
-                bool removed = inventoryService.RemoveItem(entry.Key, entry.Value, true);
+                bool removed = inventoryService.RemoveItem(entry.Key, entry.Value, ResolveStackable(entry.Key));
                 if (!removed)
                 {
                     RollbackRemovedItems(removedEntries);
-                    return Finish(SynthesisResult.CreateFailure("Failed to consume synthesis materials.", itemA, itemB, recipe));
+                    return Finish(SynthesisResult.CreateFailure("Failed to consume synthesis materials.", fishId1, fishId2, recipe));
                 }
 
                 removedEntries.Add(entry);
             }
 
-            if (recipe.outputItem == null || string.IsNullOrWhiteSpace(recipe.outputItem.itemId))
-            {
-                RollbackRemovedItems(removedEntries);
-                return Finish(SynthesisResult.CreateFailure("Recipe output item is invalid.", itemA, itemB, recipe));
-            }
-
-            bool added = inventoryService.AddItem(
-                recipe.outputItem.itemId,
-                1,
-                recipe.outputItem.stackable
-            );
-
+            bool added = inventoryService.AddItem(recipe.resultFishId, 1, ResolveStackable(recipe.resultFishId));
             if (!added)
             {
                 RollbackRemovedItems(removedEntries);
-                return Finish(SynthesisResult.CreateFailure("Failed to add synthesis result to inventory.", itemA, itemB, recipe));
+                return Finish(SynthesisResult.CreateFailure("Failed to add synthesis result to inventory.", fishId1, fishId2, recipe));
             }
 
-            string successMessage = string.IsNullOrWhiteSpace(recipe.recipeName)
-                ? "Synthesis succeeded."
-                : "Synthesis succeeded: " + recipe.recipeName;
+            Debug.Log(
+                "SynthesisManager success recipeId=" + recipe.recipeId +
+                " routeId=" + recipe.routeId +
+                " material1Id=" + fishId1 +
+                " material2Id=" + fishId2 +
+                " resultFishId=" + recipe.resultFishId);
 
-            return Finish(SynthesisResult.CreateSuccess(successMessage, itemA, itemB, recipe, 1));
+            return Finish(SynthesisResult.CreateSuccess(fishId1, fishId2, recipe));
         }
 
-        /// <summary>
-        /// 根据两个输入物品解析对应的鱼和配方，并输出失败原因。
-        /// </summary>
-        private bool TryResolveRecipe(InventoryItem itemA, InventoryItem itemB, out SynthesisRecipeData recipe, out string message)
+        public string GetResultFishId(string fishId1, string fishId2)
+        {
+            if (!ResolveRecipeDatabase())
+            {
+                return null;
+            }
+
+            SynthesisRecipeData recipe = GetMatchedRecipe(fishId1, fishId2);
+            return recipe != null ? recipe.resultFishId : null;
+        }
+
+        public int GetMatchedRecipeCount(string fishId1, string fishId2)
+        {
+            if (!ResolveRecipeDatabase())
+            {
+                return 0;
+            }
+
+            int recipeCount = recipeDatabase.GetRecipeCount(fishId1, fishId2);
+            if (recipeCount > 0)
+            {
+                return recipeCount;
+            }
+
+            return CanUseFallbackRecipe(fishId1, fishId2) ? 1 : 0;
+        }
+
+        public SynthesisRecipeData GetMatchedRecipe(string fishId1, string fishId2)
+        {
+            if (!ResolveRecipeDatabase())
+            {
+                return null;
+            }
+
+            SynthesisRecipeData recipe = recipeDatabase.FindRecipe(fishId1, fishId2);
+            if (recipe != null)
+            {
+                return recipe;
+            }
+
+            return CreateFallbackRecipe(fishId1, fishId2);
+        }
+
+        private bool TryResolveRecipe(
+            string fishId1,
+            string fishId2,
+            out SynthesisRecipeData recipe,
+            out string failureReason)
         {
             recipe = null;
 
-            ItemDataRuntime itemDataA = GetItemDataRuntime(itemA);
-            ItemDataRuntime itemDataB = GetItemDataRuntime(itemB);
-
-            if (itemDataA == null || itemDataB == null)
+            if (string.IsNullOrWhiteSpace(fishId1) || string.IsNullOrWhiteSpace(fishId2))
             {
-                message = "Please select two valid fish items.";
+                failureReason = "Please select two fish materials.";
                 return false;
             }
 
-            if (recipeDatabase == null)
-            {
-                message = "No synthesis recipe database assigned.";
-                return false;
-            }
-
-            if (fishDatabase == null)
-            {
-                message = "No fish database assigned.";
-                return false;
-            }
-
-            if (!fishDatabase.TryGetFishByItemData(itemDataA, out FishData fishA))
-            {
-                message = "Input A is not a recognized fish item.";
-                return false;
-            }
-
-            if (!fishDatabase.TryGetFishByItemData(itemDataB, out FishData fishB))
-            {
-                message = "Input B is not a recognized fish item.";
-                return false;
-            }
-
-            if (!fishA.canSynthesize || !fishB.canSynthesize)
-            {
-                message = "The selected fish cannot be synthesized.";
-                return false;
-            }
-
-            recipe = recipeDatabase.FindRecipe(fishA, fishB);
+            recipe = recipeDatabase.GetRandomRecipe(fishId1, fishId2);
             if (recipe == null)
             {
-                message = "No synthesis recipe matches the selected pair.";
-                return false;
+                recipe = CreateFallbackRecipe(fishId1, fishId2);
+                if (recipe == null)
+                {
+                    failureReason = "No matching fusion recipe was found.";
+                    return false;
+                }
+
+                Debug.LogWarning(
+                    "SynthesisManager using fallback synthesis result for material1Id=" + fishId1 +
+                    " material2Id=" + fishId2 +
+                    " resultFishId=" + recipe.resultFishId);
             }
 
-            if (recipe.outputItem == null)
+            if (string.IsNullOrWhiteSpace(recipe.resultFishId))
             {
-                message = "Recipe output item is missing.";
+                failureReason = "The matched fusion recipe has no result fish configured.";
                 return false;
             }
 
-            message = string.Empty;
+            failureReason = string.Empty;
             return true;
         }
 
-        /// <summary>
-        /// 解析并获取场景中的背包服务实例。
-        /// </summary>
         private bool ResolveInventoryService()
         {
             if (inventoryService != null)
@@ -224,17 +216,51 @@ namespace Game.Synthesis.Core
             return false;
         }
 
-        /// <summary>
-        /// 检查当前背包中的材料数量是否满足本次合成需求。
-        /// </summary>
-        private bool HasEnoughMaterials(InventoryItem itemA, InventoryItem itemB)
+        private bool ResolveRecipeDatabase()
         {
-            if (itemA == null || itemB == null || inventoryService == null)
+            if (recipeDatabase == null)
+            {
+                recipeDatabase = ScriptableObject.CreateInstance<SynthesisRecipeDatabase>();
+                recipeDatabase.name = "RuntimeSynthesisRecipeDatabase";
+            }
+
+            recipeDatabase.EnsureInitialized();
+            return recipeDatabase != null;
+        }
+
+        private bool CanUseFallbackRecipe(string fishId1, string fishId2)
+        {
+            return !string.IsNullOrWhiteSpace(fishId1) &&
+                   !string.IsNullOrWhiteSpace(fishId2) &&
+                   !string.IsNullOrWhiteSpace(defaultResultFishId);
+        }
+
+        private SynthesisRecipeData CreateFallbackRecipe(string fishId1, string fishId2)
+        {
+            if (!CanUseFallbackRecipe(fishId1, fishId2))
+            {
+                return null;
+            }
+
+            return new SynthesisRecipeData
+            {
+                recipeId = FallbackRecipeId,
+                routeId = FallbackRouteId,
+                material1Id = fishId1,
+                material2Id = fishId2,
+                resultFishId = defaultResultFishId,
+                isSymmetric = true
+            };
+        }
+
+        private bool HasEnoughMaterials(string fishId1, string fishId2)
+        {
+            if (inventoryService == null)
             {
                 return false;
             }
 
-            Dictionary<string, int> removalPlan = BuildRemovalPlan(itemA, itemB);
+            Dictionary<string, int> removalPlan = BuildRemovalPlan(fishId1, fishId2);
             foreach (KeyValuePair<string, int> entry in removalPlan)
             {
                 if (inventoryService.GetItemCount(entry.Key) < entry.Value)
@@ -246,58 +272,47 @@ namespace Game.Synthesis.Core
             return true;
         }
 
-        /// <summary>
-        /// 根据两个输入物品生成本次合成所需的扣除材料清单。
-        /// </summary>
-        private static Dictionary<string, int> BuildRemovalPlan(InventoryItem itemA, InventoryItem itemB)
+        private static Dictionary<string, int> BuildRemovalPlan(string fishId1, string fishId2)
         {
-            Dictionary<string, int> removalPlan = new Dictionary<string, int>();
-            AddRequirement(removalPlan, itemA != null ? itemA.itemId : null);
-            AddRequirement(removalPlan, itemB != null ? itemB.itemId : null);
+            Dictionary<string, int> removalPlan = new Dictionary<string, int>(StringComparer.Ordinal);
+            AddRequirement(removalPlan, fishId1);
+            AddRequirement(removalPlan, fishId2);
             return removalPlan;
         }
 
-        /// <summary>
-        /// 将单个物品需求加入扣除清单，并自动累加数量。
-        /// </summary>
-        private static void AddRequirement(Dictionary<string, int> removalPlan, string itemId)
+        private static void AddRequirement(Dictionary<string, int> removalPlan, string fishId)
         {
-            if (string.IsNullOrWhiteSpace(itemId))
+            if (string.IsNullOrWhiteSpace(fishId))
             {
                 return;
             }
 
-            removalPlan.TryGetValue(itemId, out int currentValue);
-            removalPlan[itemId] = currentValue + 1;
+            removalPlan.TryGetValue(fishId, out int currentValue);
+            removalPlan[fishId] = currentValue + 1;
         }
 
-        /// <summary>
-        /// 当合成中途失败时，把已扣除的材料重新返还到背包中。
-        /// </summary>
         private void RollbackRemovedItems(List<KeyValuePair<string, int>> removedEntries)
         {
             foreach (KeyValuePair<string, int> entry in removedEntries)
             {
-                inventoryService.AddItem(entry.Key, entry.Value, true);
+                inventoryService.AddItem(entry.Key, entry.Value, ResolveStackable(entry.Key));
             }
         }
 
-        /// <summary>
-        /// 根据背包物品获取其对应的运行时物品数据。
-        /// </summary>
-        private static ItemDataRuntime GetItemDataRuntime(InventoryItem item)
+        private static bool ResolveStackable(string itemId)
         {
-            if (item == null || string.IsNullOrWhiteSpace(item.itemId))
+            ItemDataRuntime itemData = ItemDatabaseRuntime.FindById(itemId);
+            if (itemData != null)
             {
-                return null;
+                return itemData.stackable;
             }
 
-            return ItemDatabaseRuntime.FindById(item.itemId);
+            Debug.LogWarning(
+                "SynthesisManager could not find item config for itemId=" + itemId +
+                ". Falling back to stackable=true.");
+            return true;
         }
 
-        /// <summary>
-        /// 统一分发合成完成事件，并返回最终结果。
-        /// </summary>
         private SynthesisResult Finish(SynthesisResult result)
         {
             OnSynthesisFinished?.Invoke(result);

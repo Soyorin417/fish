@@ -110,6 +110,7 @@ namespace Game.Synthesis.Core
         {
             bool shouldShow = interactorCount > 0 && synthesisUI != null && !synthesisUI.IsVisible;
 
+
             if (promptRoot != null)
             {
                 promptRoot.SetActive(shouldShow);

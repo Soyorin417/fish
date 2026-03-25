@@ -13,6 +13,7 @@ public class InventoryToggle : MonoBehaviour
 
     private IPlayerControl playerControl;
     private StarterAssetsInputs starterAssetsInputs;
+    private bool warnedInvalidPlayerControlSource;
 
     // 只表示背包面板自己是否打开
     private bool inventoryOpen;
@@ -175,15 +176,32 @@ public class InventoryToggle : MonoBehaviour
             return true;
         }
 
-        playerControl = playerControlSource as IPlayerControl;
-        if (playerControl == null && playerControlSource != null)
+        if (playerControlSource is IPlayerControl sourceControl)
         {
-            Debug.LogError("playerControlSource does not implement IPlayerControl.");
+            playerControl = sourceControl;
+            return true;
         }
 
-        if (playerControl != null)
+        if (playerControlSource != null)
         {
-            return true;
+            MonoBehaviour[] siblingBehaviours = playerControlSource.GetComponents<MonoBehaviour>();
+            foreach (MonoBehaviour behaviour in siblingBehaviours)
+            {
+                if (behaviour is IPlayerControl siblingControl)
+                {
+                    playerControlSource = behaviour;
+                    playerControl = siblingControl;
+                    return true;
+                }
+            }
+
+            if (!warnedInvalidPlayerControlSource)
+            {
+                Debug.LogWarning(
+                    "InventoryToggle playerControlSource does not implement IPlayerControl directly. " +
+                    "Tried to recover from the same GameObject: " + playerControlSource.name);
+                warnedInvalidPlayerControlSource = true;
+            }
         }
 
         foreach (MonoBehaviour behaviour in FindObjectsOfType<MonoBehaviour>(true))
@@ -194,6 +212,12 @@ public class InventoryToggle : MonoBehaviour
                 playerControl = control;
                 return true;
             }
+        }
+
+        if (!warnedInvalidPlayerControlSource)
+        {
+            Debug.LogError("InventoryToggle could not resolve any IPlayerControl in the scene.");
+            warnedInvalidPlayerControlSource = true;
         }
 
         return false;

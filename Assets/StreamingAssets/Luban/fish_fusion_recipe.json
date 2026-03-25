@@ -1,0 +1,722 @@
+[
+  {
+    "recipeId": "S01_001",
+    "routeId": "S01",
+    "material1Id": "fish_001",
+    "material2Id": "fish_002",
+    "resultFishId": "fish_016",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S01_002",
+    "routeId": "S01",
+    "material1Id": "fish_001",
+    "material2Id": "fish_002",
+    "resultFishId": "fish_003",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S01_003",
+    "routeId": "S01",
+    "material1Id": "fish_001",
+    "material2Id": "fish_002",
+    "resultFishId": "fish_012",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S01_004",
+    "routeId": "S01",
+    "material1Id": "fish_001",
+    "material2Id": "fish_002",
+    "resultFishId": "fish_021",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S01_005",
+    "routeId": "S01",
+    "material1Id": "fish_001",
+    "material2Id": "fish_002",
+    "resultFishId": "fish_015",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S01_006",
+    "routeId": "S01",
+    "material1Id": "fish_001",
+    "material2Id": "fish_002",
+    "resultFishId": "fish_018",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S01_007",
+    "routeId": "S01",
+    "material1Id": "fish_001",
+    "material2Id": "fish_002",
+    "resultFishId": "fish_005",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S01_008",
+    "routeId": "S01",
+    "material1Id": "fish_001",
+    "material2Id": "fish_002",
+    "resultFishId": "fish_007",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S01_009",
+    "routeId": "S01",
+    "material1Id": "fish_001",
+    "material2Id": "fish_002",
+    "resultFishId": "fish_023",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S01_010",
+    "routeId": "S01",
+    "material1Id": "fish_001",
+    "material2Id": "fish_002",
+    "resultFishId": "fish_006",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S01_011",
+    "routeId": "S01",
+    "material1Id": "fish_001",
+    "material2Id": "fish_002",
+    "resultFishId": "fish_010",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S01_012",
+    "routeId": "S01",
+    "material1Id": "fish_001",
+    "material2Id": "fish_002",
+    "resultFishId": "fish_009",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S01_013",
+    "routeId": "S01",
+    "material1Id": "fish_001",
+    "material2Id": "fish_002",
+    "resultFishId": "fish_024",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S01_014",
+    "routeId": "S01",
+    "material1Id": "fish_001",
+    "material2Id": "fish_002",
+    "resultFishId": "fish_020",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S01_015",
+    "routeId": "S01",
+    "material1Id": "fish_001",
+    "material2Id": "fish_002",
+    "resultFishId": "fish_022",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S01_016",
+    "routeId": "S01",
+    "material1Id": "fish_001",
+    "material2Id": "fish_002",
+    "resultFishId": "fish_019",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S02_001",
+    "routeId": "S02",
+    "material1Id": "fish_003",
+    "material2Id": "fish_010",
+    "resultFishId": "fish_009",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S02_002",
+    "routeId": "S02",
+    "material1Id": "fish_003",
+    "material2Id": "fish_010",
+    "resultFishId": "fish_024",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S02_003",
+    "routeId": "S02",
+    "material1Id": "fish_003",
+    "material2Id": "fish_010",
+    "resultFishId": "fish_020",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S02_004",
+    "routeId": "S02",
+    "material1Id": "fish_003",
+    "material2Id": "fish_010",
+    "resultFishId": "fish_022",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S02_005",
+    "routeId": "S02",
+    "material1Id": "fish_003",
+    "material2Id": "fish_010",
+    "resultFishId": "fish_019",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S03_001",
+    "routeId": "S03",
+    "material1Id": "fish_004",
+    "material2Id": "fish_009",
+    "resultFishId": "fish_024",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S03_002",
+    "routeId": "S03",
+    "material1Id": "fish_004",
+    "material2Id": "fish_009",
+    "resultFishId": "fish_020",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S03_003",
+    "routeId": "S03",
+    "material1Id": "fish_004",
+    "material2Id": "fish_009",
+    "resultFishId": "fish_022",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S03_004",
+    "routeId": "S03",
+    "material1Id": "fish_004",
+    "material2Id": "fish_009",
+    "resultFishId": "fish_019",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S04_001",
+    "routeId": "S04",
+    "material1Id": "fish_006",
+    "material2Id": "fish_022",
+    "resultFishId": "fish_019",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S05_001",
+    "routeId": "S05",
+    "material1Id": "fish_011",
+    "material2Id": "fish_012",
+    "resultFishId": "fish_021",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S05_002",
+    "routeId": "S05",
+    "material1Id": "fish_011",
+    "material2Id": "fish_012",
+    "resultFishId": "fish_015",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S05_003",
+    "routeId": "S05",
+    "material1Id": "fish_011",
+    "material2Id": "fish_012",
+    "resultFishId": "fish_018",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S05_004",
+    "routeId": "S05",
+    "material1Id": "fish_011",
+    "material2Id": "fish_012",
+    "resultFishId": "fish_005",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S05_005",
+    "routeId": "S05",
+    "material1Id": "fish_011",
+    "material2Id": "fish_012",
+    "resultFishId": "fish_007",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S05_006",
+    "routeId": "S05",
+    "material1Id": "fish_011",
+    "material2Id": "fish_012",
+    "resultFishId": "fish_023",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S05_007",
+    "routeId": "S05",
+    "material1Id": "fish_011",
+    "material2Id": "fish_012",
+    "resultFishId": "fish_006",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S05_008",
+    "routeId": "S05",
+    "material1Id": "fish_011",
+    "material2Id": "fish_012",
+    "resultFishId": "fish_010",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S05_009",
+    "routeId": "S05",
+    "material1Id": "fish_011",
+    "material2Id": "fish_012",
+    "resultFishId": "fish_009",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S05_010",
+    "routeId": "S05",
+    "material1Id": "fish_011",
+    "material2Id": "fish_012",
+    "resultFishId": "fish_024",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S05_011",
+    "routeId": "S05",
+    "material1Id": "fish_011",
+    "material2Id": "fish_012",
+    "resultFishId": "fish_020",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S05_012",
+    "routeId": "S05",
+    "material1Id": "fish_011",
+    "material2Id": "fish_012",
+    "resultFishId": "fish_022",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S05_013",
+    "routeId": "S05",
+    "material1Id": "fish_011",
+    "material2Id": "fish_012",
+    "resultFishId": "fish_019",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S06_001",
+    "routeId": "S06",
+    "material1Id": "fish_014",
+    "material2Id": "fish_015",
+    "resultFishId": "fish_018",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S06_002",
+    "routeId": "S06",
+    "material1Id": "fish_014",
+    "material2Id": "fish_015",
+    "resultFishId": "fish_005",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S06_003",
+    "routeId": "S06",
+    "material1Id": "fish_014",
+    "material2Id": "fish_015",
+    "resultFishId": "fish_007",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S06_004",
+    "routeId": "S06",
+    "material1Id": "fish_014",
+    "material2Id": "fish_015",
+    "resultFishId": "fish_023",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S06_005",
+    "routeId": "S06",
+    "material1Id": "fish_014",
+    "material2Id": "fish_015",
+    "resultFishId": "fish_006",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S06_006",
+    "routeId": "S06",
+    "material1Id": "fish_014",
+    "material2Id": "fish_015",
+    "resultFishId": "fish_010",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S06_007",
+    "routeId": "S06",
+    "material1Id": "fish_014",
+    "material2Id": "fish_015",
+    "resultFishId": "fish_009",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S06_008",
+    "routeId": "S06",
+    "material1Id": "fish_014",
+    "material2Id": "fish_015",
+    "resultFishId": "fish_024",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S06_009",
+    "routeId": "S06",
+    "material1Id": "fish_014",
+    "material2Id": "fish_015",
+    "resultFishId": "fish_020",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S06_010",
+    "routeId": "S06",
+    "material1Id": "fish_014",
+    "material2Id": "fish_015",
+    "resultFishId": "fish_022",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S06_011",
+    "routeId": "S06",
+    "material1Id": "fish_014",
+    "material2Id": "fish_015",
+    "resultFishId": "fish_019",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S07_001",
+    "routeId": "S07",
+    "material1Id": "fish_016",
+    "material2Id": "fish_017",
+    "resultFishId": "fish_003",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S07_002",
+    "routeId": "S07",
+    "material1Id": "fish_016",
+    "material2Id": "fish_017",
+    "resultFishId": "fish_012",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S07_003",
+    "routeId": "S07",
+    "material1Id": "fish_016",
+    "material2Id": "fish_017",
+    "resultFishId": "fish_021",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S07_004",
+    "routeId": "S07",
+    "material1Id": "fish_016",
+    "material2Id": "fish_017",
+    "resultFishId": "fish_015",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S07_005",
+    "routeId": "S07",
+    "material1Id": "fish_016",
+    "material2Id": "fish_017",
+    "resultFishId": "fish_018",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S07_006",
+    "routeId": "S07",
+    "material1Id": "fish_016",
+    "material2Id": "fish_017",
+    "resultFishId": "fish_005",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S07_007",
+    "routeId": "S07",
+    "material1Id": "fish_016",
+    "material2Id": "fish_017",
+    "resultFishId": "fish_007",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S07_008",
+    "routeId": "S07",
+    "material1Id": "fish_016",
+    "material2Id": "fish_017",
+    "resultFishId": "fish_023",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S07_009",
+    "routeId": "S07",
+    "material1Id": "fish_016",
+    "material2Id": "fish_017",
+    "resultFishId": "fish_006",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S07_010",
+    "routeId": "S07",
+    "material1Id": "fish_016",
+    "material2Id": "fish_017",
+    "resultFishId": "fish_010",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S07_011",
+    "routeId": "S07",
+    "material1Id": "fish_016",
+    "material2Id": "fish_017",
+    "resultFishId": "fish_009",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S07_012",
+    "routeId": "S07",
+    "material1Id": "fish_016",
+    "material2Id": "fish_017",
+    "resultFishId": "fish_024",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S07_013",
+    "routeId": "S07",
+    "material1Id": "fish_016",
+    "material2Id": "fish_017",
+    "resultFishId": "fish_020",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S07_014",
+    "routeId": "S07",
+    "material1Id": "fish_016",
+    "material2Id": "fish_017",
+    "resultFishId": "fish_022",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S07_015",
+    "routeId": "S07",
+    "material1Id": "fish_016",
+    "material2Id": "fish_017",
+    "resultFishId": "fish_019",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S08_001",
+    "routeId": "S08",
+    "material1Id": "fish_008",
+    "material2Id": "fish_007",
+    "resultFishId": "fish_023",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S08_002",
+    "routeId": "S08",
+    "material1Id": "fish_008",
+    "material2Id": "fish_007",
+    "resultFishId": "fish_006",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S08_003",
+    "routeId": "S08",
+    "material1Id": "fish_008",
+    "material2Id": "fish_007",
+    "resultFishId": "fish_010",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S08_004",
+    "routeId": "S08",
+    "material1Id": "fish_008",
+    "material2Id": "fish_007",
+    "resultFishId": "fish_009",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S08_005",
+    "routeId": "S08",
+    "material1Id": "fish_008",
+    "material2Id": "fish_007",
+    "resultFishId": "fish_024",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S08_006",
+    "routeId": "S08",
+    "material1Id": "fish_008",
+    "material2Id": "fish_007",
+    "resultFishId": "fish_020",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S08_007",
+    "routeId": "S08",
+    "material1Id": "fish_008",
+    "material2Id": "fish_007",
+    "resultFishId": "fish_022",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S08_008",
+    "routeId": "S08",
+    "material1Id": "fish_008",
+    "material2Id": "fish_007",
+    "resultFishId": "fish_019",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S09_001",
+    "routeId": "S09",
+    "material1Id": "fish_013",
+    "material2Id": "fish_003",
+    "resultFishId": "fish_012",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S09_002",
+    "routeId": "S09",
+    "material1Id": "fish_013",
+    "material2Id": "fish_003",
+    "resultFishId": "fish_021",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S09_003",
+    "routeId": "S09",
+    "material1Id": "fish_013",
+    "material2Id": "fish_003",
+    "resultFishId": "fish_015",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S09_004",
+    "routeId": "S09",
+    "material1Id": "fish_013",
+    "material2Id": "fish_003",
+    "resultFishId": "fish_018",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S09_005",
+    "routeId": "S09",
+    "material1Id": "fish_013",
+    "material2Id": "fish_003",
+    "resultFishId": "fish_005",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S09_006",
+    "routeId": "S09",
+    "material1Id": "fish_013",
+    "material2Id": "fish_003",
+    "resultFishId": "fish_007",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S09_007",
+    "routeId": "S09",
+    "material1Id": "fish_013",
+    "material2Id": "fish_003",
+    "resultFishId": "fish_023",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S09_008",
+    "routeId": "S09",
+    "material1Id": "fish_013",
+    "material2Id": "fish_003",
+    "resultFishId": "fish_006",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S09_009",
+    "routeId": "S09",
+    "material1Id": "fish_013",
+    "material2Id": "fish_003",
+    "resultFishId": "fish_010",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S09_010",
+    "routeId": "S09",
+    "material1Id": "fish_013",
+    "material2Id": "fish_003",
+    "resultFishId": "fish_009",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S09_011",
+    "routeId": "S09",
+    "material1Id": "fish_013",
+    "material2Id": "fish_003",
+    "resultFishId": "fish_024",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S09_012",
+    "routeId": "S09",
+    "material1Id": "fish_013",
+    "material2Id": "fish_003",
+    "resultFishId": "fish_020",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S09_013",
+    "routeId": "S09",
+    "material1Id": "fish_013",
+    "material2Id": "fish_003",
+    "resultFishId": "fish_022",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S09_014",
+    "routeId": "S09",
+    "material1Id": "fish_013",
+    "material2Id": "fish_003",
+    "resultFishId": "fish_019",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S11_001",
+    "routeId": "S11",
+    "material1Id": "fish_020",
+    "material2Id": "fish_006",
+    "resultFishId": "fish_022",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S11_002",
+    "routeId": "S11",
+    "material1Id": "fish_020",
+    "material2Id": "fish_006",
+    "resultFishId": "fish_019",
+    "isSymmetric": true
+  },
+  {
+    "recipeId": "S11_003",
+    "routeId": "S11",
+    "material1Id": "fish_002",
+    "material2Id": "fish_002",
+    "resultFishId": "fish_002",
+    "isSymmetric": true
+  }
+]

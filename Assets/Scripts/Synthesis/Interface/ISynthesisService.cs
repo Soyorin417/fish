@@ -1,5 +1,4 @@
 using System;
-using Game.Inventory;
 using Game.Synthesis.Core;
 using Game.Synthesis.Data;
 
@@ -9,8 +8,10 @@ namespace Game.Synthesis.Interface
     {
         event Action<SynthesisResult> OnSynthesisFinished;
 
-        bool CanSynthesize(InventoryItem itemA, InventoryItem itemB);
-        SynthesisRecipeData GetMatchedRecipe(InventoryItem itemA, InventoryItem itemB);
-        SynthesisResult TrySynthesize(InventoryItem itemA, InventoryItem itemB);
+        bool CanSynthesize(string fishId1, string fishId2);
+        SynthesisResult TrySynthesize(string fishId1, string fishId2);
+        string GetResultFishId(string fishId1, string fishId2);
+        int GetMatchedRecipeCount(string fishId1, string fishId2);
+        SynthesisRecipeData GetMatchedRecipe(string fishId1, string fishId2);
     }
 }

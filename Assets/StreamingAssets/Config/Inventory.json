@@ -1,20 +1,40 @@
 {
     "items": [
         {
-            "itemId": "fish_003",
-            "amount": 2
+            "itemId": "fish_025",
+            "amount": 82
         },
         {
-            "itemId": "fish_002",
-            "amount": 5
-        },
-        {
-            "itemId": "fish_001",
+            "itemId": "fish_014",
             "amount": 3
         },
         {
-            "itemId": "fish_004",
+            "itemId": "fish_005",
             "amount": 1
+        },
+        {
+            "itemId": "fish_019",
+            "amount": 1
+        },
+        {
+            "itemId": "fish_024",
+            "amount": 2
+        },
+        {
+            "itemId": "fish_008",
+            "amount": 2
+        },
+        {
+            "itemId": "fish_023",
+            "amount": 2
+        },
+        {
+            "itemId": "fish_011",
+            "amount": 12
+        },
+        {
+            "itemId": "fish_022",
+            "amount": 2
         }
     ]
 }
